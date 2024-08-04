@@ -7,8 +7,7 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <TextBlock>Home screen</TextBlock>
-        <StackPanel>
+        <StackPanel Margin="10">
             <Button Content="Show Toast" Click="ShowToastButton_Click"/>
             <Button Content="Show Loading" Click="ShowLoadingButton_Click"/>
         </StackPanel>

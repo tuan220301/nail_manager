@@ -8,4 +8,23 @@
         <UseWPF>true</UseWPF>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="FontAwesome.WPF" Version="4.7.0.9" />
+      <PackageReference Include="SharpVectors" Version="1.8.4.1" />
+      <PackageReference Include="SharpVectors.Wpf" Version="1.8.4" />
+      <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+      <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Images\Images\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Images\Svgs\logo.svg" />
+      <Folder Include="Images\Svgs\logo.svg">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Folder>
+    </ItemGroup>
+
 </Project>

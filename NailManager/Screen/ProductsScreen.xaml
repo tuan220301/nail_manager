@@ -1,0 +1,149 @@
+<UserControl x:Class="NailManager.Screen.ProductsScreen"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:NailManager.Screen"
+             xmlns:faWPF="http://schemas.fontawesome.io/icons/"
+             mc:Ignorable="d"
+             d:DesignHeight="942" d:DesignWidth="1700">
+     <UserControl.Resources>
+        <!-- Color Resources -->
+        <Color x:Key="BillOrangeColor">#FF8811</Color>
+        <Color x:Key="BillMainLightColor">#FFFBF0</Color>
+        <Color x:Key="BillSecondaryColor">#9DD9D2</Color>
+        <SolidColorBrush x:Key="BillOrangeColorBrush" Color="{StaticResource BillOrangeColor}" />
+        <SolidColorBrush x:Key="BillMainLightColorBrush" Color="{StaticResource BillMainLightColor}" />
+        <SolidColorBrush x:Key="BillSecondaryColorBrush" Color="{StaticResource BillSecondaryColor}" />
+        <SolidColorBrush x:Key="WhiteBrush" Color="White" />
+
+        <Style x:Key="MarginTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,10,0,10"/>
+        </Style>
+        <Style x:Key="CurrencyInputStyle" TargetType="TextBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="#E5E7EB" 
+                                BorderThickness="1" 
+                                CornerRadius="20" 
+                                Padding="10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="$" VerticalAlignment="Center" Margin="5,0" Foreground="Gray"/>
+                                <ScrollViewer Grid.Column="1" Margin="5,0" x:Name="PART_ContentHost"/>
+                                <TextBlock Text="USD" Grid.Column="2" VerticalAlignment="Center" Margin="5,0" Foreground="Black"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="BorderBrush" Value="Gray" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="{StaticResource WhiteBrush}" />
+        </Style>
+        <!-- TextBox Style -->
+        <Style x:Key="NormalInput" TargetType="TextBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="#E5E7EB" 
+                                BorderThickness="1" 
+                                CornerRadius="20" 
+                                Padding="10">
+                            <ScrollViewer Margin="0" x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="BorderBrush" Value="Gray" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="{StaticResource WhiteBrush}" />
+        </Style>
+
+        <!-- Button Style with CornerRadius -->
+        <Style TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="20" Height="50">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+       
+        <Grid Grid.Row="0">
+            <TextBlock Text="Product" FontSize="24" FontWeight="Bold"/>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="440"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" CornerRadius="24" BorderThickness="1" BorderBrush="#E5E7EB">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="80"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Margin="10" Grid.Row="0">
+                    <TextBlock Text="Create Product" FontSize="20" FontWeight="Bold" Style="{StaticResource MarginTextBlockStyle}"/>
+                    <TextBlock Text="Create a service in store..." FontSize="16" Style="{StaticResource MarginTextBlockStyle}"/>
+                    <TextBlock Text="Name*" FontSize="18" Style="{StaticResource MarginTextBlockStyle}"/>
+                    <TextBox FontSize="16" Text="Name product" Style="{StaticResource NormalInput}"></TextBox>
+                    <TextBlock Text="Amount*" FontSize="18" Style="{StaticResource MarginTextBlockStyle}"/>
+                    <TextBox FontSize="16" Text="1000.00" Style="{StaticResource CurrencyInputStyle}"></TextBox>
+                    <TextBlock Text="Image*" FontSize="18" Style="{StaticResource MarginTextBlockStyle}"/>
+                    <Border CornerRadius="20" BorderThickness="1" BorderBrush="#E5E7EB" Height="250" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="250"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="420"/>
+                            </Grid.ColumnDefinitions>
+                            <faWPF:ImageAwesome Icon="Image" HorizontalAlignment="Center" VerticalAlignment="Center" Width="40" Height="40"/>
+                        </Grid>
+                    </Border>
+                   
+                </StackPanel>    
+                    <StackPanel Grid.Row="1" Margin="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Background="Black"  Foreground="White" FontSize="20" Content="Add product"/>
+                            <Button Grid.Column="2" Content="Cancel" Background="White" FontSize="20"/>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+               
+            </Border>
+            <Border Grid.Column="2" CornerRadius="24" BorderBrush="#E5E7EB" BorderThickness="1">
+                
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
