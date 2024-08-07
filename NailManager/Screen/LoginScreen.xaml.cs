@@ -7,7 +7,10 @@ using NailManager.Models;
 using SharpVectors.Dom.Svg;
 using SharpVectors.Renderers.Utils;
 using SharpVectors.Renderers.Wpf;
-
+using System.Net.Http;
+using System.Text;
+using NailManager.Layout;
+using Newtonsoft.Json; 
 namespace NailManager.Screen
 {
     public partial class LoginScreen : UserControl
@@ -80,28 +83,63 @@ namespace NailManager.Screen
         }
 
         private async void Submit(object sender, RoutedEventArgs e)
+{
+    LoginLoadingIcon.Visibility = Visibility.Visible;
+    string username = UsernameTextBox.Text;
+    string password = PasswordBox.Password;
+    
+    // Log giá trị username và password
+    Console.WriteLine($"username: {username}");
+    Console.WriteLine($"password: {password}");
+    
+    if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+    {
+        ErrorMessageTextBlock.Text = "Please fill in both fields.";
+        ErrorMessageTextBlock.Visibility = Visibility.Visible;
+        LoginLoadingIcon.Visibility = Visibility.Collapsed;
+    }
+    else
+    {
+        var user = new { user_name = username, password = password };
+        
+        string json = JsonConvert.SerializeObject(user);
+        ApiConnect apiString = new ApiConnect();
+        using (var client = new HttpClient())
         {
-            string username = UsernameTextBox.Text;
-            string password = PasswordBox.Password;
-
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            // var content = new StringContent(json, Encoding.UTF8, "application/json");
+            // var response = await client.PostAsync($"{apiString.Url}/auth/login", content);
+            
+            // Log response
+            // Console.WriteLine($"response: {response.ToString()}");
+            
+            // if (response.IsSuccessStatusCode)
+            if(user.user_name == "user" && password == "user")
             {
-                ErrorMessageTextBlock.Text = "Please fill in both fields.";
-                ErrorMessageTextBlock.Visibility = Visibility.Visible;
-            }
-            else if (username != "user" || password != "user")
-            {
-                ErrorMessageTextBlock.Text = "Invalid username or password.";
-                ErrorMessageTextBlock.Visibility = Visibility.Visible;
+                // string responseBody = await response.Content.ReadAsStringAsync();
+                // var responseData = JsonConvert.DeserializeObject<ResponseData>(responseBody);
+                //
+                // // Log responseData
+                // Console.WriteLine($"responseData: {responseData.Token}");
+                
+                LoginLoadingIcon.Visibility = Visibility.Collapsed;
+                
+                // Save user to database if needed
+                await NailManager.Helpers.DatabaseHelper.SaveUserAsync(new User { Username = username, Password = password });
+                //
+                ErrorMessageTextBlock.Visibility = Visibility.Collapsed;
+                LoginSuccessful?.Invoke(this, EventArgs.Empty);
             }
             else
             {
-                ErrorMessageTextBlock.Visibility = Visibility.Collapsed;
-                var user = new User { Username = username, Password = password };
-                await NailManager.Helpers.DatabaseHelper.SaveUserAsync(user);
-                LoginSuccessful?.Invoke(this, EventArgs.Empty);
+                ErrorMessageTextBlock.Text = "Invalid username or password.";
+                ErrorMessageTextBlock.Visibility = Visibility.Visible;
+                LoginLoadingIcon.Visibility = Visibility.Collapsed;
             }
         }
+    }
+}
+
+
 
         private void SubmitKeyDown(object sender, KeyEventArgs e)
         {

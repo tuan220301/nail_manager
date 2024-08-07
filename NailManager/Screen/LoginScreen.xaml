@@ -1,31 +1,34 @@
-<UserControl x:Class="NailManager.Screen.LoginScreen"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:faWPF="http://schemas.fontawesome.io/icons/"
-             mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
+<UserControl
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="NailManager.Screen.LoginScreen"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:faWPF="http://schemas.fontawesome.io/icons/"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
-        <!-- Color Resources -->
+        <!--  Color Resources  -->
         <Color x:Key="BillOrangeColor">#FF8811</Color>
         <Color x:Key="BillMainLightColor">#FFFBF0</Color>
         <Color x:Key="BillSecondaryColor">#9DD9D2</Color>
-        <SolidColorBrush x:Key="BillOrangeColorBrush" Color="{StaticResource BillOrangeColor}" />
-        <SolidColorBrush x:Key="BillMainLightColorBrush" Color="{StaticResource BillMainLightColor}" />
-        <SolidColorBrush x:Key="BillSecondaryColorBrush" Color="{StaticResource BillSecondaryColor}" />
-        <SolidColorBrush x:Key="WhiteBrush" Color="White" />
+        <SolidColorBrush Color="{StaticResource BillOrangeColor}" x:Key="BillOrangeColorBrush" />
+        <SolidColorBrush Color="{StaticResource BillMainLightColor}" x:Key="BillMainLightColorBrush" />
+        <SolidColorBrush Color="{StaticResource BillSecondaryColor}" x:Key="BillSecondaryColorBrush" />
+        <SolidColorBrush Color="White" x:Key="WhiteBrush" />
 
-        <!-- TextBox Style -->
+        <!--  TextBox Style  -->
         <Style TargetType="TextBox">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="20">
-                            <ScrollViewer Margin="0" x:Name="PART_ContentHost"/>
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="20">
+                            <ScrollViewer Margin="0" x:Name="PART_ContentHost" />
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -36,23 +39,24 @@
             <Setter Property="Background" Value="{StaticResource WhiteBrush}" />
         </Style>
 
-        <!-- PasswordBox Style -->
+        <!--  PasswordBox Style  -->
         <Style TargetType="PasswordBox">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="PasswordBox">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="20">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="20">
                             <Grid>
-                                <ScrollViewer Margin="0" x:Name="PART_ContentHost"/>
-                                <Button  
-                                        HorizontalAlignment="Right" 
-                                        VerticalAlignment="Center" 
-                                        Background="Transparent" 
-                                        BorderThickness="0"
-                                        Padding="10">
+                                <ScrollViewer Margin="0" x:Name="PART_ContentHost" />
+                                <Button
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    HorizontalAlignment="Right"
+                                    Padding="10"
+                                    VerticalAlignment="Center">
                                     <!-- <faWPF:ImageAwesome x:Name="TogglePasswordIcon" Icon="Eye" /> -->
                                 </Button>
                             </Grid>
@@ -66,16 +70,30 @@
             <Setter Property="Background" Value="{StaticResource WhiteBrush}" />
         </Style>
 
-        <!-- Button Style with CornerRadius -->
+        <!--  Button Style with CornerRadius  -->
         <Style TargetType="Button">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="20">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="20">
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                                <faWPF:ImageAwesome
+                                    Height="16"
+                                    Icon="Spinner"
+                                    Margin="0,0,5,0"
+                                    Spin="True"
+                                    Visibility="Collapsed"
+                                    Width="16"
+                                    x:Name="LoginLoadingIcon" />
+                                <ContentPresenter />
+                            </StackPanel>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -95,7 +113,14 @@
             <ColumnDefinition Width="2*" />
         </Grid.ColumnDefinitions>
 
-        <Border Background="{DynamicResource BillMainLightColorBrush}" CornerRadius="10" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="20">
+        <Border
+            Background="{DynamicResource BillMainLightColorBrush}"
+            CornerRadius="10"
+            Grid.Column="1"
+            Grid.Row="1"
+            HorizontalAlignment="Stretch"
+            Padding="20"
+            VerticalAlignment="Stretch">
             <Grid Margin="10">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -107,20 +132,98 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                
-                <Image x:Name="LogoSvg" Width="200" Height="150"  Grid.Row="0" Margin="0,0,0,20"/>
-                <TextBlock Text="Username*" FontSize="18" FontWeight="Bold" Margin="0,10,0,5" Grid.Row="1"/>
-                <TextBox x:Name="UsernameTextBox" FontSize="16" Height="40" Padding="10,5,10,0" Margin="0,0,0,0" Background="{StaticResource WhiteBrush}" Grid.Row="2"/>
-                <TextBlock Text="Password*" FontSize="18" FontWeight="Bold" Margin="0,10,0,5" Grid.Row="3"/>
-                <Grid x:Name="PasswordGrid" Background="{StaticResource WhiteBrush}" Height="40" VerticalAlignment="Center" Margin="0,0,0,10" Grid.Row="4">
-                    <PasswordBox x:Name="PasswordBox" FontSize="16" Padding="10,5,10,0" Background="{StaticResource WhiteBrush}" />
-                    <TextBox x:Name="VisiblePassword" FontSize="16" Padding="10,5,10,0" Background="{StaticResource WhiteBrush}" Visibility="Collapsed" />
-                    <Button  Width="30" Margin="0,0,10,0" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" BorderThickness="0" Click="ShowPassword">
-                        <faWPF:ImageAwesome x:Name="TogglePasswordIcon" Icon="Eye" />
+
+                <Image
+                    Grid.Row="0"
+                    Height="150"
+                    Margin="0,0,0,20"
+                    Width="200"
+                    x:Name="LogoSvg" />
+                <TextBlock
+                    FontSize="18"
+                    FontWeight="Bold"
+                    Grid.Row="1"
+                    Margin="0,10,0,5"
+                    Text="Username*" />
+                <TextBox
+                    Background="{StaticResource WhiteBrush}"
+                    FontSize="16"
+                    Grid.Row="2"
+                    Height="40"
+                    Margin="0,0,0,0"
+                    Padding="10,5,10,0"
+                    x:Name="UsernameTextBox" />
+                <TextBlock
+                    FontSize="18"
+                    FontWeight="Bold"
+                    Grid.Row="3"
+                    Margin="0,10,0,5"
+                    Text="Password*" />
+                <Grid
+                    Background="{StaticResource WhiteBrush}"
+                    Grid.Row="4"
+                    Height="40"
+                    Margin="0,0,0,10"
+                    VerticalAlignment="Center"
+                    x:Name="PasswordGrid">
+                    <PasswordBox
+                        Background="{StaticResource WhiteBrush}"
+                        FontSize="16"
+                        Padding="10,5,10,0"
+                        x:Name="PasswordBox" />
+                    <TextBox
+                        Background="{StaticResource WhiteBrush}"
+                        FontSize="16"
+                        Padding="10,5,10,0"
+                        Visibility="Collapsed"
+                        x:Name="VisiblePassword" />
+                    <Button
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="ShowPassword"
+                        Height="30"
+                        HorizontalAlignment="Right"
+                        Margin="0,0,10,0"
+                        VerticalAlignment="Center"
+                        Width="30">
+                        <faWPF:ImageAwesome Icon="Eye" x:Name="TogglePasswordIcon" />
                     </Button>
                 </Grid>
-                <TextBlock x:Name="ErrorMessageTextBlock" Text="This is an error message" Foreground="Red" Margin="0,5,0,10" Grid.Row="5" Visibility="Collapsed"/>
-                <Button PreviewKeyDown="SubmitKeyDown" IsDefault="true" Content="Login" FontSize="18" Background="{DynamicResource BillOrangeColorBrush}" Foreground="White" Height="40" Margin="0,20,0,0" Grid.Row="6" Click="Submit"/>
+                <TextBlock
+                    Foreground="Red"
+                    Grid.Row="5"
+                    Margin="0,5,0,10"
+                    Text="This is an error message"
+                    Visibility="Collapsed"
+                    x:Name="ErrorMessageTextBlock" />
+                <Button
+                    Background="{DynamicResource BillOrangeColorBrush}"
+                    Click="Submit"
+                    FontSize="18"
+                    Foreground="White"
+                    Grid.Row="6"
+                    Height="40"
+                    IsDefault="true"
+                    Margin="0,20,0,0"
+                    PreviewKeyDown="SubmitKeyDown"
+                    x:Name="LoginButton">
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                        <faWPF:ImageAwesome
+                            Height="16"
+                            Icon="Spinner"
+                            Margin="0,0,5,0"
+                            Spin="True"
+                            Visibility="Collapsed"
+                            Width="16"
+                            x:Name="LoginLoadingIcon" />
+                        <TextBlock Text="Login" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+
             </Grid>
         </Border>
     </Grid>

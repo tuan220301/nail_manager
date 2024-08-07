@@ -125,6 +125,9 @@ namespace NailManager.Layout
                     page = new ProductsScreen();
                     break;
                 // Add cases for other pages
+                case "Menu":
+                    page = new BillScreen();
+                    break;
                 default:
                     // Handle unknown page case if necessary
                     break;
