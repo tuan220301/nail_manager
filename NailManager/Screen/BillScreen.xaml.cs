@@ -10,8 +10,8 @@ namespace NailManager.Screen
         public BillScreen()
         {
             InitializeComponent();
-            _selectedButton = CreateButton; // Mặc định chọn nút Create
-            UpdateDynamicContent("Create");
+            _selectedButton = ListButton; // Mặc định chọn nút Create
+            UpdateDynamicContent("List");
         }
 
         private void TabChange(object sender, RoutedEventArgs e)
@@ -40,7 +40,7 @@ namespace NailManager.Screen
                     content = new TabBillList(); // Thay thế bằng UserControl tương ứng
                     break;
                 default:
-                    content = new TabBillCreate(); // Thay thế bằng UserControl tương ứng
+                    content = new TabBillList(); // Thay thế bằng UserControl tương ứng
                     break;
             }
 

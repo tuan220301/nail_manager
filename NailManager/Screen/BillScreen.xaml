@@ -80,24 +80,24 @@
                     <ColumnDefinition Width="20" />
                     <ColumnDefinition Width="150" />
                 </Grid.ColumnDefinitions>
-
-                <Button
-                    Click="TabChange"
-                    Content="Create"
-                    FontSize="18"
-                    Grid.Column="0"
-                    Style="{StaticResource SelectedButtonStyle}"
-                    Tag="Create"
-                    x:Name="CreateButton" />
                 <Button
                     Click="TabChange"
                     Content="List"
                     FontSize="18"
-                    Grid.Column="2"
+                    Grid.Column="0"
                     Margin="5,0,0,0"
-                    Style="{StaticResource UnselectedButtonStyle}"
+                    Style="{StaticResource SelectedButtonStyle}"
                     Tag="List"
                     x:Name="ListButton" />
+                <Button
+                    Click="TabChange"
+                    Content="Create"
+                    FontSize="18"
+                    Grid.Column="2"
+                    Style="{StaticResource UnselectedButtonStyle}"
+                    Tag="Create"
+                    x:Name="CreateButton" />
+
             </Grid>
 
         </Grid>
