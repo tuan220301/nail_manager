@@ -47,7 +47,7 @@ namespace NailManager.Screen
         {
             var mainLayout = new MainLayout();
             mainLayout.Logout += OnLogout;
-            mainLayout.SetBodyContent(new HomeScreen());
+            mainLayout.SetBodyContent(new TabBillCreate());
             MainContentControl.Content = mainLayout;
         }
 

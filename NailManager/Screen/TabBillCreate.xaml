@@ -258,7 +258,7 @@
                 <RepeatButton
                     Command="ScrollBar.LineRightCommand"
                     Content="M 0 0 L 4 4 L 0 8 Z"
-                    Grid.Column="3"
+                    Grid.Column="2"
                     Style="{StaticResource ScrollBarLineButton}"
                     Width="18" />
             </Grid>
@@ -574,7 +574,7 @@
                                                         VerticalAlignment="Center" />
                                                 </StackPanel>
                                                 <!--  Plus Button  -->
-                                                <Button Style="{StaticResource IconButtonStyle}">
+                                                <Button Click="OnAddItemClick" Style="{StaticResource IconButtonStyle}">
                                                     <faWPF:ImageAwesome
                                                         Foreground="#FFF8F0"
                                                         Height="20"
@@ -604,20 +604,26 @@
                     FontWeight="Bold"
                     Margin="0,10,0,10"
                     Text="Order details" />
+                <TextBlock>Customer Name</TextBlock>
                 <TextBox
                     FontSize="16"
                     Margin="0,0,0,10"
                     Style="{StaticResource NormalInput}"
-                    Text="Customer Name" />
+                    Text=""
+                    x:Name="CustomerNameTextBox" />
+                <TextBlock>Customer Phone</TextBlock>
                 <TextBox
                     FontSize="16"
                     Margin="0,0,0,10"
                     Style="{StaticResource NormalInput}"
-                    Text="Phone number" />
+                    Text=""
+                    x:Name="PhoneNumberTextBox" />
+                <TextBlock>Employee</TextBlock>
                 <ComboBox
                     FontSize="16"
                     Margin="0,0,0,10"
-                    Style="{StaticResource RoundComboBox}">
+                    Style="{StaticResource RoundComboBox}"
+                    x:Name="StaffComboBox">
                     <ComboBoxItem Content="Staff 1" />
                     <ComboBoxItem Content="Staff 2" />
                 </ComboBox>
@@ -626,11 +632,8 @@
                     FontWeight="Bold"
                     Margin="0,10,0,5"
                     Text="Order #id" />
-                <TextBlock
-                    FontSize="16"
-                    Margin="0,0,0,10"
-                    Text="6 items" />
-                <ItemsControl>
+
+                <ItemsControl ItemsSource="{Binding SelectedItems}" x:Name="SelectedItemsControl">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border
@@ -640,37 +643,103 @@
                                 CornerRadius="10"
                                 Margin="10"
                                 Padding="10">
-                                <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
+                                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <!--  name  -->
+                                        <ColumnDefinition Width="Auto" />
+                                        <!--  space  -->
+                                        <ColumnDefinition Width="*" />
+                                        <!--  remove  -->
+                                        <ColumnDefinition Width="100" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="50" />
+                                        <RowDefinition Height="20" />
+                                        <RowDefinition Height="30" />
+                                    </Grid.RowDefinitions>
                                     <TextBlock
                                         FontSize="18"
                                         FontWeight="Bold"
-                                        Text="Product Name" />
+                                        Grid.Column="0"
+                                        Grid.Row="0"
+                                        Text="{Binding Name}"
+                                        VerticalAlignment="Center" />
                                     <TextBlock
                                         FontSize="12"
                                         Foreground="Gray"
+                                        Grid.Column="0"
+                                        Grid.Row="1"
                                         Margin="10,0,0,0"
-                                        Text="Note: Don't cut my nail" />
+                                        Text="Note: Don't cut my nail"
+                                        VerticalAlignment="Center" />
                                     <TextBlock
                                         FontSize="18"
                                         FontWeight="Bold"
                                         Foreground="Green"
+                                        Grid.Column="0"
+                                        Grid.Row="2"
                                         Margin="10,0,0,0"
-                                        Text="10.00" />
-                                    <Button
-                                        Background="Red"
-                                        Content="x"
-                                        Foreground="White"
-                                        Margin="10,0,0,0" />
-                                </StackPanel>
+                                        VerticalAlignment="Center">
+                                        <TextBlock.Text>
+                                            <Binding Path="Price" StringFormat="{}{0} $" />
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                    <!--  <Button  -->
+                                    <!--  Click="OnRemoveItemClick"  -->
+                                    <!--  Grid.Column="2"  -->
+                                    <!--  Grid.Row="0"  -->
+                                    <!--  Margin="30,0,0,0"  -->
+                                    <!--  Style="{StaticResource IconButtonStyle}">  -->
+                                    <!--  <faWPF:ImageAwesome  -->
+                                    <!--  Foreground="#FFF8F0"  -->
+                                    <!--  Height="20"  -->
+                                    <!--  Icon="MinusCircle"  -->
+                                    <!--  Width="20" />  -->
+                                    <!-- </Button> -->
+                                    <StackPanel
+                                        Grid.Column="2"
+                                        Grid.Row="2"
+                                        HorizontalAlignment="Center"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                        <Button
+                                            Click="OnAddItemClick"
+                                            Height="30"
+                                            Style="{StaticResource IconButtonStyle}"
+                                            VerticalAlignment="Center"
+                                            Width="30">
+                                            <faWPF:ImageAwesome
+                                                Foreground="#FFF8F0"
+                                                Height="15"
+                                                Icon="Plus"
+                                                Width="15" />
+                                        </Button>
+
+                                        <TextBlock
+                                            FontSize="18"
+                                            Margin="10,0"
+                                            Text="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            VerticalAlignment="Center" />
+                                        <Button
+                                            Click="OnRemoveItemClick"
+                                            Height="30"
+                                            Style="{StaticResource IconButtonStyle}"
+                                            Width="30">
+                                            <faWPF:ImageAwesome
+                                                Foreground="#FFF8F0"
+                                                Height="15"
+                                                Icon="MinusCircle"
+                                                Width="15" />
+                                        </Button>
+                                    </StackPanel>
+
+                                </Grid>
                             </Border>
+
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBox
-                    FontSize="16"
-                    Margin="0,10,0,10"
-                    Style="{StaticResource NormalInput}"
-                    Text="Add voucher" />
+
                 <TextBlock
                     FontSize="18"
                     FontWeight="Bold"
@@ -681,11 +750,12 @@
                     FontWeight="Bold"
                     Foreground="Green"
                     Margin="0,0,0,10"
-                    Text="200.00" />
+                    x:Name="TotalPrice" />
                 <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                     <Button
                         Background="Orange"
                         BorderThickness="0"
+                        Click="PrintBill_Click"
                         Content="Create bill"
                         FontSize="18"
                         Foreground="White"
@@ -697,7 +767,8 @@
                     <Button
                         Background="Gray"
                         BorderThickness="0"
-                        Content="Clear"
+                        Click="PreviewBill_Click"
+                        Content="Preview"
                         FontSize="18"
                         Foreground="White"
                         Height="50"

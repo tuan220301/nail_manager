@@ -1,6 +1,6 @@
 <UserControl
-    d:DesignHeight="450"
-    d:DesignWidth="800"
+    d:DesignHeight="942"
+    d:DesignWidth="1700"
     mc:Ignorable="d"
     x:Class="NailManager.Layout.MainLayout"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,12 +8,17 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:svgc="http://sharpvectors.codeplex.com/runtime/"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
     <UserControl.Resources>
         <!--  Color Resources  -->
         <Color x:Key="BillOrangeColor">#FF8811</Color>
         <Color x:Key="BillMainLightColor">#FFF8F0</Color>
         <Color x:Key="BillSecondaryColor">#9DD9D2</Color>
         <Color x:Key="BillMainRedColor">#DC2626</Color>
+        <Color x:Key="BillMainDarkColor">#3B3B58</Color>
+        <!--  Định nghĩa màu  -->
+        <SolidColorBrush Color="{StaticResource BillMainDarkColor}" x:Key="BillMainDarkBrush" />
+        <!--  Tạo SolidColorBrush từ màu  -->
         <SolidColorBrush Color="{StaticResource BillOrangeColor}" x:Key="BillOrangeColorBrush" />
         <SolidColorBrush Color="{StaticResource BillMainLightColor}" x:Key="BillMainLightColorBrush" />
         <SolidColorBrush Color="{StaticResource BillSecondaryColor}" x:Key="BillSecondaryColorBrush" />
@@ -47,7 +52,57 @@
                         <Border
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            CornerRadius="20">
+                            CornerRadius="20"
+                            Height="40"
+                            Padding="16,0,16,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  Unselected Button Style  -->
+        <Style TargetType="Button" x:Key="UnselectedButtonStyle">
+            <Setter Property="Background" Value="{StaticResource WhiteBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource BillMainDarkBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BillSecondaryColorBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Height" Value="54" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="20"
+                            Padding="32,8,32,8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  selectedButtonStyle Button Style  -->
+        <Style TargetType="Button" x:Key="SelectedButtonStyle">
+            <Setter Property="Background" Value="{StaticResource BillOrangeColorBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource WhiteBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BillMainDarkBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Height" Value="54" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="20"
+                            Padding="32,8,32,8">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
@@ -55,6 +110,7 @@
             </Setter>
         </Style>
     </UserControl.Resources>
+
     <Grid Background="{DynamicResource BillMainLightColorBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="80" x:Name="HeaderRow" />
@@ -62,12 +118,15 @@
         </Grid.RowDefinitions>
 
         <!--  Header  -->
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="0" x:Name="HeaderPanel">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <Image
@@ -76,22 +135,36 @@
                 Margin="0,0,0,0"
                 Width="140"
                 x:Name="LogoSvg" />
+            <Button
+                Click="NavigateBtnClick"
+                Content="New Order"
+                FontSize="24"
+                Grid.Column="1"
+                Margin="5,0,0,0"
+                Style="{StaticResource SelectedButtonStyle}"
+                Tag="New" />
+            <Button
+                Click="NavigateBtnClick"
+                Content="Process Order"
+                FontSize="24"
+                Grid.Column="3"
+                Style="{StaticResource UnselectedButtonStyle}"
+                Tag="Process" />
             <TextBlock
                 FontSize="20"
-                Grid.Column="2"
+                Grid.Column="5"
                 HorizontalAlignment="Center"
                 Margin="10,0,10,0"
                 Text="UserName"
-                VerticalAlignment="Center"
-                x:Name="UsernameTextBlock" />
+                VerticalAlignment="Center" />
             <Button
                 Background="{DynamicResource BillMainRed}"
                 Click="LogoutBtn"
                 Content="Logout"
-                FontSize="18"
+                FontSize="20"
                 Foreground="White"
-                Grid.Column="3"
-                Height="40"
+                Grid.Column="6"
+                Height="50"
                 Margin="0,0,10,0"
                 Style="{StaticResource LogoutBtnStyle}" />
         </Grid>
@@ -112,36 +185,29 @@
                 <Button
                     Click="NavigateBtnClick"
                     Content="Dashboard"
-                    FontSize="18"
-                    Style="{StaticResource MenuBtnStyle}"
+                    FontSize="24"
+                    Style="{StaticResource UnselectedButtonStyle}"
                     Tag="Home" />
                 <Button
                     Click="NavigateBtnClick"
-                    Content="Menu"
-                    FontSize="18"
-                    Margin="0,20,0,0"
-                    Style="{StaticResource MenuBtnStyle}"
-                    Tag="Menu" />
-                <Button
-                    Click="NavigateBtnClick"
                     Content="Products"
-                    FontSize="18"
+                    FontSize="24"
                     Margin="0,20,0,0"
-                    Style="{StaticResource MenuBtnStyle}"
+                    Style="{StaticResource UnselectedButtonStyle}"
                     Tag="Products" />
                 <Button
                     Click="NavigateBtnClick"
                     Content="Services"
-                    FontSize="18"
+                    FontSize="24"
                     Margin="0,20,0,0"
-                    Style="{StaticResource MenuBtnStyle}"
+                    Style="{StaticResource UnselectedButtonStyle}"
                     Tag="Services" />
                 <Button
                     Click="NavigateBtnClick"
                     Content="Employee"
-                    FontSize="18"
+                    FontSize="24"
                     Margin="0,20,0,0"
-                    Style="{StaticResource MenuBtnStyle}"
+                    Style="{StaticResource UnselectedButtonStyle}"
                     Tag="Employee" />
             </StackPanel>
 
@@ -176,7 +242,7 @@
         <!--  Toast Notification  -->
         <Border
             Background="DarkGray"
-            Grid.Row="2"
+            Grid.Row="1"
             Height="30"
             Margin="0,0,0,0"
             VerticalAlignment="Top"

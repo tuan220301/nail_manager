@@ -2,7 +2,6 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
 using NailManager.Helpers;
 using NailManager.Models;
 using NailManager.Screen;
@@ -17,13 +16,13 @@ namespace NailManager.Layout
         public static MainLayout? Instance { get; private set; }
         private WpfSvgWindow _wpfWindow;
         public event EventHandler? Logout;
-        private string _currentPage = "Home";
+        private string _currentPage = "New";
 
         public MainLayout()
         {
             InitializeComponent();
             Instance = this;
-            SetBodyContent(new HomeScreen());
+            SetBodyContent(new TabBillCreate());
             ApplyColors();
             InitializeSvgRendering();
             DisplaySvg();
@@ -107,6 +106,19 @@ namespace NailManager.Layout
             var button = sender as Button;
             if (button != null)
             {
+                // Reset tất cả các nút về UnselectedButtonStyle trước
+                foreach (var child in SidebarPanel.Children)
+                {
+                    if (child is Button btn)
+                    {
+                        btn.Style = (Style)FindResource("UnselectedButtonStyle");
+                    }
+                }
+
+                // Đặt style của nút đã nhấn thành SelectedButtonStyle
+                button.Style = (Style)FindResource("SelectedButtonStyle");
+
+                // Điều hướng đến trang tương ứng
                 var pageName = button.Tag.ToString();
                 NavigateToPage(pageName);
             }
@@ -118,18 +130,21 @@ namespace NailManager.Layout
             _currentPage = pageName;
             switch (pageName)
             {
+                case "New":
+                    page = new TabBillCreate();
+                    break;
+                case "Process":
+                    page = new TabBillList();
+                    break;
                 case "Home":
                     page = new HomeScreen();
                     break;
                 case "Products":
                     page = new ProductsScreen();
                     break;
-                // Add cases for other pages
-                case "Menu":
-                    page = new BillScreen();
-                    break;
+               
                 default:
-                    // Handle unknown page case if necessary
+                    page = new TabBillCreate();
                     break;
             }
 
@@ -142,18 +157,39 @@ namespace NailManager.Layout
 
         private void HighlightCurrentPageButton()
         {
+            // Kiểm tra các nút trong SidebarPanel
             foreach (var child in SidebarPanel.Children)
             {
                 if (child is Button button)
                 {
-                    button.ClearValue(Button.BackgroundProperty);
                     if (button.Tag != null && button.Tag.ToString() == _currentPage)
                     {
-                        button.Background = (Brush)FindResource("BillOrangeColorBrush");
+                        button.Style = (Style)FindResource("SelectedButtonStyle");
+                    }
+                    else
+                    {
+                        button.Style = (Style)FindResource("UnselectedButtonStyle");
+                    }
+                }
+            }
+
+            // Kiểm tra các nút trong HeaderPanel
+            foreach (var child in HeaderPanel.Children)
+            {
+                if (child is Button button)
+                {
+                    if (button.Tag != null && button.Tag.ToString() == _currentPage)
+                    {
+                        button.Style = (Style)FindResource("SelectedButtonStyle");
+                    }
+                    else
+                    {
+                        button.Style = (Style)FindResource("UnselectedButtonStyle");
                     }
                 }
             }
         }
+
 
         private async void LogoutBtn(object sender, RoutedEventArgs e)
         {

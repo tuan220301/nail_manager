@@ -12,6 +12,7 @@ public class Bill
    public int total_price { get; set; }
    public DateTime created_at { get; set; }
    public DateTime updated_at { get; set; }
+public  List<Product> products { get; set; }
 }
 
 public class BillList
