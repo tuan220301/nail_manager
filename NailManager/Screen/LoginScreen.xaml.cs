@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,7 +11,10 @@ using SharpVectors.Renderers.Wpf;
 using System.Net.Http;
 using System.Text;
 using NailManager.Layout;
-using Newtonsoft.Json; 
+using NailManager.Services;
+using Newtonsoft.Json;
+using static System.Int32;
+
 namespace NailManager.Screen
 {
     public partial class LoginScreen : UserControl
@@ -106,27 +110,39 @@ namespace NailManager.Screen
         ApiConnect apiString = new ApiConnect();
         using (var client = new HttpClient())
         {
-            // var content = new StringContent(json, Encoding.UTF8, "application/json");
-            // var response = await client.PostAsync($"{apiString.Url}/auth/login", content);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await client.PostAsync($"{apiString.Url}/auth/login", content);
             
             // Log response
             // Console.WriteLine($"response: {response.ToString()}");
             
-            // if (response.IsSuccessStatusCode)
-            if(user.user_name == "user" && password == "user")
+            if (response.IsSuccessStatusCode)
+            // if(user.user_name == "user" && password == "user")
             {
-                // string responseBody = await response.Content.ReadAsStringAsync();
-                // var responseData = JsonConvert.DeserializeObject<ResponseData>(responseBody);
-                //
-                // // Log responseData
-                // Console.WriteLine($"responseData: {responseData.Token}");
+                string responseBody = await response.Content.ReadAsStringAsync();
+                LoginRespon? responseData = JsonConvert.DeserializeObject<LoginRespon>(responseBody);
+                
+                // Log responseData
+                // Console.WriteLine($"responseData: {responseData}");
+                Console.WriteLine("Status: " + responseData.status);
+                if (response.StatusCode == (HttpStatusCode)200)
+                {
+                Console.WriteLine("Message: " + responseData.message);
+                Console.WriteLine("Message: " + responseData.data.access_token);
+                DataRespon data = responseData.data;
+                // Save user to database if needed
+                await DatabaseHelper.SaveUserAsync(new User
+                {
+
+                    UserName= data.user_name, 
+                    AccessToken = data.access_token,
+                    Name = data.user_name,
+                    UserId = Parse(data.user_id),
+                    Permission = data.permision,
+                });
+                }
                 
                 LoginLoadingIcon.Visibility = Visibility.Collapsed;
-                
-                // Save user to database if needed
-                await NailManager.Helpers.DatabaseHelper.SaveUserAsync(new User { Username = username, Password = password });
-                //
-                ErrorMessageTextBlock.Visibility = Visibility.Collapsed;
                 LoginSuccessful?.Invoke(this, EventArgs.Empty);
             }
             else

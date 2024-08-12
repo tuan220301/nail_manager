@@ -1,6 +1,6 @@
 using System.Windows.Controls;
-using NailManager.Helpers;
 using NailManager.Layout;
+using NailManager.Services;
 
 namespace NailManager.Screen
 {

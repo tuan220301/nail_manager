@@ -186,7 +186,11 @@
                         Margin="0,0,10,0"
                         VerticalAlignment="Center"
                         Width="30">
-                        <faWPF:ImageAwesome Icon="Eye" x:Name="TogglePasswordIcon" />
+                        <faWPF:ImageAwesome
+                            Height="20"
+                            Icon="Eye"
+                            Width="20"
+                            x:Name="TogglePasswordIcon" />
                     </Button>
                 </Grid>
                 <TextBlock

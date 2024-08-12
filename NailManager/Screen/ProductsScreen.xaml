@@ -27,6 +27,109 @@
         <Style TargetType="TextBlock" x:Key="MarginTextBlockStyle">
             <Setter Property="Margin" Value="0,10,0,10" />
         </Style>
+
+        <!--  ComboBox Style  -->
+        <Style TargetType="{x:Type TextBox}" x:Key="ComboBoxTextBoxStyle">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}" CornerRadius="20,0,0,20">
+                                <ScrollViewer x:Name="PART_ContentHost" />
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="{x:Type ToggleButton}" x:Key="ComboBoxButtonStyle">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <Border
+                            Background="White"
+                            CornerRadius="0,20,20,0"
+                            x:Name="border">
+                            <ContentPresenter />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="{x:Type ComboBox}" x:Key="RoundComboBox">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition MaxWidth="18" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                Height="{TemplateBinding Height}"
+                                Name="PART_EditableTextBox"
+                                Padding="5,0,0,0"
+                                Style="{StaticResource ComboBoxTextBoxStyle}" />
+                            <ToggleButton
+                                ClickMode="Press"
+                                Focusable="False"
+                                FontSize="50"
+                                Grid.Column="1"
+                                Height="{TemplateBinding Height}"
+                                IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                Margin="0"
+                                Style="{StaticResource ComboBoxButtonStyle}">
+                                <Path
+                                    Data="M 0 0 L 4 4 L 8 0 Z"
+                                    Fill="DodgerBlue"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                            </ToggleButton>
+                            <ContentPresenter
+                                Content="{TemplateBinding SelectionBoxItem}"
+                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                Grid.Column="0"
+                                HorizontalAlignment="Left"
+                                Margin="5,0,0,0"
+                                Name="ContentSite"
+                                VerticalAlignment="Center" />
+                            <Popup
+                                AllowsTransparency="True"
+                                Focusable="False"
+                                Grid.Column="0"
+                                IsOpen="{TemplateBinding IsDropDownOpen}"
+                                Name="Popup"
+                                Placement="Bottom"
+                                PopupAnimation="Slide">
+                                <Grid
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    MinWidth="{TemplateBinding ActualWidth}"
+                                    Name="DropDown"
+                                    SnapsToDevicePixels="True">
+                                    <Border
+                                        Background="Azure"
+                                        BorderBrush="Black"
+                                        BorderThickness="1"
+                                        CornerRadius="5"
+                                        x:Name="DropDownBorder" />
+                                    <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+
         <Style TargetType="TextBox" x:Key="CurrencyInputStyle">
             <Setter Property="Template">
                 <Setter.Value>
@@ -197,11 +300,37 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="0" Margin="0,0,0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="20" />
+                <!--  Column for TextBlock  -->
+                <ColumnDefinition Width="Auto" />
+                <!--  Column for ComboBox  -->
+            </Grid.ColumnDefinitions>
+
             <TextBlock
                 FontSize="24"
                 FontWeight="Bold"
-                Text="Product" />
+                Grid.Column="0"
+                Text="Product"
+                VerticalAlignment="Center" />
+
+            <Border
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="10"
+                Grid.Column="2"
+                Margin="10,0,0,0">
+                <ComboBox
+                    DisplayMemberPath="name"
+                    FontSize="18"
+                    SelectedValuePath="branch_id"
+                    Style="{StaticResource RoundComboBox}"
+                    VerticalAlignment="Center"
+                    Width="200"
+                    x:Name="BranchComboBox" />
+            </Border>
         </Grid>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -236,7 +365,8 @@
                         <TextBox
                             FontSize="16"
                             Style="{StaticResource NormalInput}"
-                            Text="Name product" />
+                            Text=""
+                            x:Name="Name" />
                         <TextBlock
                             FontSize="18"
                             Style="{StaticResource MarginTextBlockStyle}"
@@ -244,7 +374,8 @@
                         <TextBox
                             FontSize="16"
                             Style="{StaticResource CurrencyInputStyle}"
-                            Text="1000.00" />
+                            Text=""
+                            x:Name="Amout" />
                         <TextBlock
                             FontSize="18"
                             Style="{StaticResource MarginTextBlockStyle}"
@@ -282,6 +413,7 @@
                             </Grid.ColumnDefinitions>
                             <Button
                                 Background="Black"
+                                Click="OnSubmit"
                                 Content="Add product"
                                 FontSize="20"
                                 Foreground="White"

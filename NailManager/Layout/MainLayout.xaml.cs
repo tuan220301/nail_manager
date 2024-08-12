@@ -2,9 +2,9 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using NailManager.Helpers;
 using NailManager.Models;
 using NailManager.Screen;
+using NailManager.Services;
 using SharpVectors.Dom.Svg;
 using SharpVectors.Renderers.Utils;
 using SharpVectors.Renderers.Wpf;
@@ -17,6 +17,7 @@ namespace NailManager.Layout
         private WpfSvgWindow _wpfWindow;
         public event EventHandler? Logout;
         private string _currentPage = "New";
+        public string permision = "";
 
         public MainLayout()
         {
@@ -27,6 +28,7 @@ namespace NailManager.Layout
             InitializeSvgRendering();
             DisplaySvg();
             HighlightCurrentPageButton();
+            GetUser();
         }
 
         private void ApplyColors()
@@ -38,6 +40,60 @@ namespace NailManager.Layout
             Application.Current.Resources["BillSecondaryColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillSecondary));
             Application.Current.Resources["BillSandColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillSand));
             Application.Current.Resources["BillMainRed"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillMainRed));
+        }
+        private async void GetUser ()
+        {
+            ShowLoading(true);
+            var user = await DatabaseHelper.GetUserAsync();
+            if (user != null)
+            {
+                userName.Text = user.UserName;
+                permision = user.Permission;
+                CheckPermissionsAndShowMenu(permision);
+                ShowLoading(false);
+            }
+            
+        }
+        private void CheckPermissionsAndShowMenu(string permission)
+        {
+            // Ẩn toàn bộ các menu trước
+            foreach (var child in SidebarPanel.Children)
+            {
+                if (child is Button btn)
+                {
+                    btn.Visibility = Visibility.Collapsed;
+                }
+            }
+
+            // Kiểm tra quyền và hiển thị menu tương ứng
+            if (permission.Contains("1"))
+            {
+                AdminButton.Visibility = Visibility.Visible;
+                // Hiển thị tất cả menu
+                foreach (var child in SidebarPanel.Children)
+                {
+                    if (child is Button btn)
+                    {
+                        btn.Visibility = Visibility.Visible;
+                    }
+                }
+            }
+
+            else
+            {
+                AdminButton.Visibility = Visibility.Collapsed;
+            }
+        }
+        private void ShowMenuByTag(string tag)
+        {
+            foreach (var child in SidebarPanel.Children)
+            {
+                if (child is Button btn && btn.Tag?.ToString() == tag)
+                {
+                    btn.Visibility = Visibility.Visible;
+                    break;
+                }
+            }
         }
 
         private void InitializeSvgRendering()

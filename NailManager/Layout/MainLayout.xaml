@@ -124,6 +124,8 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -150,20 +152,29 @@
                 Grid.Column="3"
                 Style="{StaticResource UnselectedButtonStyle}"
                 Tag="Process" />
+            <Button
+                Click="NavigateBtnClick"
+                Content="Admin"
+                FontSize="24"
+                Grid.Column="5"
+                Style="{StaticResource UnselectedButtonStyle}"
+                Tag="Admin"
+                x:Name="AdminButton" />
             <TextBlock
                 FontSize="20"
-                Grid.Column="5"
+                Grid.Column="7"
                 HorizontalAlignment="Center"
                 Margin="10,0,10,0"
                 Text="UserName"
-                VerticalAlignment="Center" />
+                VerticalAlignment="Center"
+                x:Name="userName" />
             <Button
                 Background="{DynamicResource BillMainRed}"
                 Click="LogoutBtn"
                 Content="Logout"
                 FontSize="20"
                 Foreground="White"
-                Grid.Column="6"
+                Grid.Column="8"
                 Height="50"
                 Margin="0,0,10,0"
                 Style="{StaticResource LogoutBtnStyle}" />

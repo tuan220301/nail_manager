@@ -1,10 +1,8 @@
-using SQLite;
-using System;
 using System.IO;
-using System.Threading.Tasks;
 using NailManager.Models;
+using SQLite;
 
-namespace NailManager.Helpers
+namespace NailManager.Services
 {
     public static class DatabaseHelper
     {
@@ -18,7 +16,12 @@ namespace NailManager.Helpers
         public static async Task InitializeDatabaseAsync()
         {
             var db = GetConnection();
-            await db.CreateTableAsync<User>();
+            var tableInfo = await db.GetTableInfoAsync(nameof(User));
+
+            if (!tableInfo.Any()) // Kiểm tra xem bảng User có tồn tại không
+            {
+                await db.CreateTableAsync<User>();
+            }
         }
 
         public static async Task<User> GetUserAsync()
