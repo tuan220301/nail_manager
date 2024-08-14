@@ -198,7 +198,12 @@ namespace NailManager.Layout
                 case "Products":
                     page = new ProductsScreen();
                     break;
-               
+                case "Employee":
+                    page = new EmployeeScreen();
+                    break;
+                case "Admin":
+                    page = new AdminScreen();
+                    break;
                 default:
                     page = new TabBillCreate();
                     break;

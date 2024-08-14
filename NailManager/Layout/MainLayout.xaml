@@ -206,13 +206,13 @@
                     Margin="0,20,0,0"
                     Style="{StaticResource UnselectedButtonStyle}"
                     Tag="Products" />
-                <Button
-                    Click="NavigateBtnClick"
-                    Content="Services"
-                    FontSize="24"
-                    Margin="0,20,0,0"
-                    Style="{StaticResource UnselectedButtonStyle}"
-                    Tag="Services" />
+                <!--  <Button  -->
+                <!--  Click="NavigateBtnClick"  -->
+                <!--  Content="Services"  -->
+                <!--  FontSize="24"  -->
+                <!--  Margin="0,20,0,0"  -->
+                <!--  Style="{StaticResource UnselectedButtonStyle}"  -->
+                <!--  Tag="Services" />  -->
                 <Button
                     Click="NavigateBtnClick"
                     Content="Employee"

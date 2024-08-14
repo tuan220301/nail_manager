@@ -4,10 +4,12 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using NailManager.Layout;
 using NailManager.Models;
 using NailManager.Services;
 using Newtonsoft.Json;
+
 namespace NailManager.Screen;
 
 public partial class ProductsScreen : UserControl
@@ -18,18 +20,16 @@ public partial class ProductsScreen : UserControl
     public ProductsScreen()
     {
         InitializeComponent();
-        Products = new ObservableCollection<Product>
-        {
-            new Product { ProductId = "Product-123", Name = "Sample product 1", Price = "$20.5", IsChecked = false },
-            new Product { ProductId = "Product-124", Name = "Sample product 2", Price = "$25.0", IsChecked = false },
-            // Thêm các sản phẩm khác tại đây
-        };
+        Products = new ObservableCollection<Product>();
         FilteredProducts = CollectionViewSource.GetDefaultView(Products);
         DataContext = this;
         GetBrandList();
+        GetListProduct();
     }
+
     private async void GetBrandList()
     {
+        ShowLoading(true); // Hiển thị loading
         string url = "/branch/list"; // Replace with your API endpoint
         Dictionary<string, string> parameters = new Dictionary<string, string>();
 
@@ -37,10 +37,6 @@ public partial class ProductsScreen : UserControl
 
         await apiService.GetApiAsync(url, parameters, (responseBody) =>
         {
-            Console.WriteLine("Raw API response:");
-            Console.WriteLine(responseBody);
-
-            // Continue with JSON deserialization
             try
             {
                 var responseData = JsonConvert.DeserializeObject<BranchApiResponse<List<Branch>>>(responseBody);
@@ -52,6 +48,7 @@ public partial class ProductsScreen : UserControl
                         BranchComboBox.ItemsSource = responseData.data;
                         BranchComboBox.DisplayMemberPath = "name";
                         BranchComboBox.SelectedValuePath = "branch_id";
+                        BranchComboBox.SelectedValue = 1; // Đặt giá trị mặc định là branch_id = 1
                     });
                 }
                 else
@@ -63,107 +60,151 @@ public partial class ProductsScreen : UserControl
             {
                 MessageBox.Show($"Error processing API response: {ex.Message}");
             }
+            finally
+            {
+                ShowLoading(false); // Ẩn loading khi hoàn tất
+            }
         });
     }
-
-
-   private async void OnSubmit(object sender, RoutedEventArgs e)
-{
-    // Show the loading indicator
-    StartLoadingProcess();
-
-    try
+    private void BranchComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // Retrieve input values
-        string name = Name.Text;
-        string amount = Amout.Text;
-        int branchId = (int)BranchComboBox.SelectedValue;
+        if (BranchComboBox.SelectedValue != null)
+        {
+            int selectedBranchId = (int)BranchComboBox.SelectedValue;
+            GetListProduct(selectedBranchId);  // Gọi lại với branch_id mới
+        }
+    }
 
-        // Log values for debugging purposes
-        Console.WriteLine("Name: " + name);
-        Console.WriteLine("Amount: " + amount);
-        Console.WriteLine("Branch ID: " + branchId);
+    private async void GetListProduct(int branchId = 1)
+    {
+        ShowLoading(true); // Hiển thị loading
 
-        // Define the API endpoint URL
-        string url = "/product/create"; // Replace with your actual API endpoint
+        string url = $"/product/list?branch_id={branchId}";
         Dictionary<string, string> parameters = new Dictionary<string, string>();
-
-        // Add the parameters to the dictionary
-        parameters.Add("product_name", name);
-        parameters.Add("price", amount);
-        parameters.Add("branch_id", branchId.ToString());
-
-        // Create an instance of the Api class to use its PostApiAsync method
         var apiService = new Api();
-        await apiService.PostApiAsync(url, parameters, (responseBody) =>
+
+        await apiService.GetApiAsync(url, parameters, (responseBody) =>
         {
             try
             {
-                // Assuming the response is JSON, deserialize it to check the status or get data
-                var responseData =
-                    JsonConvert.DeserializeObject<BranchApiResponse<CreateProductResponse>>(responseBody);
-
-                // Check if the response indicates success
-                if (responseData != null && responseData.status == 200)
+                if (string.IsNullOrEmpty(responseBody))
                 {
-                    // Perform further actions on successful response
-                    MessageBox.Show("Product successfully added to the branch.");
+                    MessageBox.Show("API response is empty or null.");
+                    return;
+                }
+
+                var responseData = JsonConvert.DeserializeObject<BranchApiResponse<List<Product>>>(responseBody);
+
+                if (responseData == null)
+                {
+                    MessageBox.Show("Failed to parse API response.");
+                    return;
+                }
+
+                if (responseData.status == 200 && responseData.data != null)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        Products.Clear();  // Xóa dữ liệu cũ
+                        foreach (var product in responseData.data)
+                        {
+                            Products.Add(product);
+                        }
+
+                        FilteredProducts.Refresh(); // Làm mới CollectionView để cập nhật UI
+                    });
                 }
                 else
                 {
-                    // Handle the case where the API returned an error status
-                    MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
+                    MessageBox.Show("Failed to load products.");
                 }
             }
             catch (Exception ex)
             {
-                // Handle any exceptions that occur during response processing
                 MessageBox.Show($"Error processing API response: {ex.Message}");
+            }
+            finally
+            {
+                ShowLoading(false); // Ẩn loading khi hoàn tất
             }
         });
     }
-    finally
-    {
-        // Hide the loading indicator regardless of success or failure
-        StartLoadingProcess(false);
-    }
-}
 
-private void StartLoadingProcess(bool isLoading = true)
-{
-    // Get the MainLayout instance from the parent window
-    var mainWindow = Window.GetWindow(this) as MainWindow;
-    MainLayout mainLayout = null;
 
-    if (mainWindow != null)
+    private async void OnSubmit(object sender, RoutedEventArgs e)
     {
-        mainLayout = mainWindow.Content as MainLayout;
-        if (mainLayout != null)
+        ShowLoading(true); // Hiển thị loading
+        try
         {
-            mainLayout.ShowLoading(isLoading);
-        }
-    }
-}
+            // Retrieve input values
+            string name = Name.Text;
+            string amount = Amout.Text;
+            int branchId = (int)BranchComboBox.SelectedValue;
 
+            // Define the API endpoint URL
+            string url = "/product/create"; // Replace with your actual API endpoint
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
 
-    
+            // Add the parameters to the dictionary
+            parameters.Add("product_name", name);
+            parameters.Add("price", amount);
+            parameters.Add("branch_id", branchId.ToString());
 
-    
-    private void OnSearch(object sender, RoutedEventArgs e)
-    {
-        string searchText = ((Grid)((Button)sender).Parent).Children.OfType<TextBox>().FirstOrDefault()?.Text;
-        if (!string.IsNullOrEmpty(searchText))
-        {
-            FilteredProducts.Filter = product =>
+            // Create an instance of the Api class to use its PostApiAsync method
+            var apiService = new Api();
+            await apiService.PostApiAsync(url, parameters, (responseBody) =>
             {
-                var p = product as Product;
-                return p != null && (p.ProductId.Contains(searchText) || p.Name.Contains(searchText) || p.Price.Contains(searchText));
-            };
+                try
+                {
+                    // Assuming the response is JSON, deserialize it to check the status or get data
+                    var responseData =
+                        JsonConvert.DeserializeObject<BranchApiResponse<CreateProductResponse>>(responseBody);
+
+                    // Check if the response indicates success
+                    if (responseData != null && responseData.status == 200)
+                    {
+                        // MessageBox.Show("Product successfully added to the branch.");
+                        GetListProduct(branchId);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error processing API response: {ex.Message}");
+                }
+            });
         }
-        else
+        finally
         {
-            FilteredProducts.Filter = null;
+            ShowLoading(false); // Ẩn loading khi hoàn tất
         }
-        FilteredProducts.Refresh();
+    }
+
+    private void ProductItem_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Border border && border.DataContext is Product selectedProduct)
+        {
+            // Điền thông tin của sản phẩm vào các trường input
+            Name.Text = selectedProduct.product_name;
+            Amout.Text = selectedProduct.price.ToString();
+            // Các trường khác nếu cần
+        }
+    }
+    private void Cancel_Click(object sender, RoutedEventArgs e)
+    {
+        // Xóa toàn bộ dữ liệu trong các trường input
+        Name.Text = string.Empty;
+        Amout.Text = string.Empty;
+        // Xóa các trường khác nếu cần
+    }
+    private void ShowLoading(bool show)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        });
     }
 }

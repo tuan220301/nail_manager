@@ -5,9 +5,10 @@ namespace NailManager.Models;
 public class Product : INotifyPropertyChanged
 {
     private bool _isChecked;
-    public string ProductId { get; set; }
-    public string Name { get; set; }
-    public string Price { get; set; }
+    public int product_id { get; set; }
+    public string product_name { get; set; }
+    public int price { get; set; }
+    public int branch_id { get; set; }
     public int Quantity { get; set; }
 
     public bool IsChecked

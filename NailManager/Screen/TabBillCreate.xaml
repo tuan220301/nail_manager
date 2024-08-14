@@ -490,105 +490,122 @@
                         </TextBlock.Style>
                     </TextBlock>
                 </Grid>
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding MenuItems}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel
-                                    ItemHeight="200"
-                                    ItemWidth="370"
-                                    Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border
-                                    Background="#FFF8F0"
-                                    BorderBrush="#E4E4E7"
-                                    BorderThickness="1"
-                                    CornerRadius="12"
-                                    Height="176"
-                                    Margin="10"
-                                    Padding="5"
-                                    Width="350">
-                                    <StackPanel Orientation="Horizontal">
-                                        <!--  Image Frame  -->
-                                        <Border
-                                            Background="White"
-                                            CornerRadius="20"
-                                            Height="150"
-                                            Margin="10"
-                                            Width="150">
-                                            <Image
+
+                <Grid>
+                    <!--  ScrollViewer chứa danh sách sản phẩm  -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding FilteredProducts}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel
+                                        ItemHeight="200"
+                                        ItemWidth="370"
+                                        Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border
+                                        Background="#FFF8F0"
+                                        BorderBrush="#E4E4E7"
+                                        BorderThickness="1"
+                                        CornerRadius="12"
+                                        Height="176"
+                                        Margin="10"
+                                        Padding="5"
+                                        Width="350">
+                                        <StackPanel Orientation="Horizontal">
+                                            <!--  Image Frame  -->
+                                            <Border
+                                                Background="White"
+                                                CornerRadius="20"
                                                 Height="150"
-                                                Source="{Binding Image}"
-                                                Stretch="UniformToFill"
-                                                Width="150" />
-                                        </Border>
-                                        <!--  Caption Frame  -->
-                                        <StackPanel
-                                            Height="160"
-                                            Orientation="Vertical"
-                                            Width="182">
-                                            <!--  Short description, category  -->
-                                            <TextBlock
-                                                FontFamily="Inter"
-                                                FontSize="14"
-                                                FontWeight="Light"
-                                                Foreground="#71717A"
-                                                Text="Short description, category" />
-                                            <!--  Product Name  -->
-                                            <TextBlock
-                                                FontFamily="Inter"
-                                                FontSize="20"
-                                                FontWeight="SemiBold"
-                                                Foreground="#392F5A"
-                                                Margin="0,4,0,0"
-                                                Text="{Binding Name}" />
-                                            <StackPanel Height="50" />
-                                            <!--  Price and Action  -->
+                                                Margin="10"
+                                                Width="150">
+                                                <Image
+                                                    Height="150"
+                                                    Source="{Binding Image}"
+                                                    Stretch="UniformToFill"
+                                                    Width="150" />
+                                            </Border>
+                                            <!--  Caption Frame  -->
                                             <StackPanel
-                                                HorizontalAlignment="Stretch"
-                                                Margin="0,12,0,0"
-                                                Orientation="Horizontal"
-                                                VerticalAlignment="Bottom">
-                                                <!--  Price  -->
+                                                Height="160"
+                                                Orientation="Vertical"
+                                                Width="182">
+                                                <!--  Product Name  -->
+                                                <TextBlock
+                                                    FontFamily="Inter"
+                                                    FontSize="20"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="#392F5A"
+                                                    Margin="0,4,0,0"
+                                                    Text="{Binding product_name}" />
+                                                <StackPanel Height="50" />
+                                                <!--  Price and Action  -->
                                                 <StackPanel
-                                                    Height="38"
+                                                    HorizontalAlignment="Stretch"
+                                                    Margin="0,12,0,0"
                                                     Orientation="Horizontal"
-                                                    Width="96">
-                                                    <TextBlock
-                                                        FontFamily="Inter"
-                                                        FontSize="24"
-                                                        FontWeight="Bold"
-                                                        Foreground="#392F5A"
-                                                        Text="$"
-                                                        VerticalAlignment="Center" />
-                                                    <TextBlock
-                                                        FontFamily="Inter"
-                                                        FontSize="24"
-                                                        FontWeight="Bold"
-                                                        Foreground="#392F5A"
-                                                        Margin="4,0,0,0"
-                                                        Text="{Binding Price}"
-                                                        VerticalAlignment="Center" />
+                                                    VerticalAlignment="Bottom">
+                                                    <!--  Price  -->
+                                                    <StackPanel
+                                                        Height="38"
+                                                        Orientation="Horizontal"
+                                                        Width="96">
+                                                        <TextBlock
+                                                            FontFamily="Inter"
+                                                            FontSize="24"
+                                                            FontWeight="Bold"
+                                                            Foreground="#392F5A"
+                                                            Text="$"
+                                                            VerticalAlignment="Center" />
+                                                        <TextBlock
+                                                            FontFamily="Inter"
+                                                            FontSize="24"
+                                                            FontWeight="Bold"
+                                                            Foreground="#392F5A"
+                                                            Margin="4,0,0,0"
+                                                            Text="{Binding price}"
+                                                            VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                    <!--  Plus Button  -->
+                                                    <Button Click="OnAddItemClick" Style="{StaticResource IconButtonStyle}">
+                                                        <faWPF:ImageAwesome
+                                                            Foreground="#FFF8F0"
+                                                            Height="20"
+                                                            Icon="Plus"
+                                                            Width="20" />
+                                                    </Button>
                                                 </StackPanel>
-                                                <!--  Plus Button  -->
-                                                <Button Click="OnAddItemClick" Style="{StaticResource IconButtonStyle}">
-                                                    <faWPF:ImageAwesome
-                                                        Foreground="#FFF8F0"
-                                                        Height="20"
-                                                        Icon="Plus"
-                                                        Width="20" />
-                                                </Button>
                                             </StackPanel>
                                         </StackPanel>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!--  Loading Indicator  -->
+                    <Border
+                        Background="#80000000"
+                        HorizontalAlignment="Center"
+                        Padding="20"
+                        VerticalAlignment="Center"
+                        Visibility="Collapsed"
+                        x:Name="LoadingOverlay">
+                        <!--  Hidden by default  -->
+                        <StackPanel>
+                            <TextBlock
+                                FontSize="20"
+                                Foreground="White"
+                                HorizontalAlignment="Center"
+                                Text="Loading..." />
+                            <ProgressBar IsIndeterminate="True" Width="200" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
             </DockPanel>
         </Border>
 
@@ -662,16 +679,9 @@
                                         FontWeight="Bold"
                                         Grid.Column="0"
                                         Grid.Row="0"
-                                        Text="{Binding Name}"
+                                        Text="{Binding product_name}"
                                         VerticalAlignment="Center" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        Foreground="Gray"
-                                        Grid.Column="0"
-                                        Grid.Row="1"
-                                        Margin="10,0,0,0"
-                                        Text="Note: Don't cut my nail"
-                                        VerticalAlignment="Center" />
+
                                     <TextBlock
                                         FontSize="18"
                                         FontWeight="Bold"
@@ -681,21 +691,9 @@
                                         Margin="10,0,0,0"
                                         VerticalAlignment="Center">
                                         <TextBlock.Text>
-                                            <Binding Path="Price" StringFormat="{}{0} $" />
+                                            <Binding Path="price" StringFormat="{}{0} $" />
                                         </TextBlock.Text>
                                     </TextBlock>
-                                    <!--  <Button  -->
-                                    <!--  Click="OnRemoveItemClick"  -->
-                                    <!--  Grid.Column="2"  -->
-                                    <!--  Grid.Row="0"  -->
-                                    <!--  Margin="30,0,0,0"  -->
-                                    <!--  Style="{StaticResource IconButtonStyle}">  -->
-                                    <!--  <faWPF:ImageAwesome  -->
-                                    <!--  Foreground="#FFF8F0"  -->
-                                    <!--  Height="20"  -->
-                                    <!--  Icon="MinusCircle"  -->
-                                    <!--  Width="20" />  -->
-                                    <!-- </Button> -->
                                     <StackPanel
                                         Grid.Column="2"
                                         Grid.Row="2"
@@ -706,7 +704,6 @@
                                             Click="OnAddItemClick"
                                             Height="30"
                                             Style="{StaticResource IconButtonStyle}"
-                                            VerticalAlignment="Center"
                                             Width="30">
                                             <faWPF:ImageAwesome
                                                 Foreground="#FFF8F0"
@@ -779,4 +776,5 @@
             </StackPanel>
         </Border>
     </Grid>
+
 </UserControl>
