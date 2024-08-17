@@ -10,7 +10,7 @@ public class Product : INotifyPropertyChanged
     public int price { get; set; }
     public int branch_id { get; set; }
     public int Quantity { get; set; }
-
+    public string url_image { get; set; } 
     public bool IsChecked
     {
         get { return _isChecked; }

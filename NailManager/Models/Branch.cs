@@ -19,3 +19,13 @@ public class CreateProductResponse
 {
     public int product_id { get; set; }
 }
+public class UserResponseData
+{
+    public int user_id { get; set; }
+}
+public class BillResponseData
+{
+    public int bill_id { get; set; }
+}
+
+// Định nghĩa lớp API response chung

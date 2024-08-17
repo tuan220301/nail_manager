@@ -5,8 +5,7 @@
     x:Class="NailManager.Screen.EmployeeScreen"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:faWPF="http://schemas.fontawesome.io/icons/"
-    xmlns:local="clr-namespace:NailManager.Screen"
+    xmlns:faWpf="http://schemas.fontawesome.io/icons/"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
@@ -17,7 +16,9 @@
         <Color x:Key="InfoColor">#17a2b8</Color>
         <Color x:Key="WarningColor">#ffc107</Color>
         <Color x:Key="ErrorColor">#dc3545</Color>
+        <Color x:Key="FilterColor">#392F5A</Color>
         <SolidColorBrush Color="{StaticResource BillOrangeColor}" x:Key="BillOrangeColorBrush" />
+        <SolidColorBrush Color="{StaticResource FilterColor}" x:Key="UserFilterColor" />
         <SolidColorBrush Color="{StaticResource BillMainLightColor}" x:Key="BillMainLightColorBrush" />
         <SolidColorBrush Color="{StaticResource BillSecondaryColor}" x:Key="BillSecondaryColorBrush" />
         <SolidColorBrush Color="White" x:Key="WhiteBrush" />
@@ -176,7 +177,7 @@
                     <ControlTemplate TargetType="TextBox">
                         <Border
                             Background="{TemplateBinding Background}"
-                            BorderBrush="#E5E7EB"
+                            BorderBrush="Gray"
                             BorderThickness="1"
                             CornerRadius="20"
                             Padding="10">
@@ -291,19 +292,80 @@
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="Foreground" Value="White" />
         </Style>
+        <!--  Date picker  -->
+        <Style TargetType="{x:Type DatePicker}" x:Key="RoundedDatePickerStyle">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DatePicker}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border
+                                Background="White"
+                                BorderBrush="Gray"
+                                BorderThickness="1"
+                                CornerRadius="20"
+                                Grid.Column="0">
+                                <Grid>
+                                    <TextBox
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Height="40"
+                                        IsReadOnly="True"
+                                        Name="PART_TextBox"
+                                        Text="{Binding Path=SelectedDate, RelativeSource={RelativeSource TemplatedParent}, StringFormat='{}{0:MM/dd/yyyy}'}"
+                                        VerticalAlignment="Center" />
+                                    <Button
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,0,10,0"
+                                        Name="PART_Button"
+                                        VerticalAlignment="Center"
+                                        Width="20">
+                                        <faWpf:ImageAwesome Icon="Calendar" x:Name="TogglePasswordIcon" />
+                                    </Button>
+                                    <Popup
+                                        AllowsTransparency="True"
+                                        Focusable="False"
+                                        IsOpen="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Name="PART_Popup"
+                                        Placement="Bottom"
+                                        PlacementTarget="{Binding ElementName=PART_TextBox}"
+                                        PopupAnimation="Slide">
+                                        <Border
+                                            Background="White"
+                                            BorderBrush="Gray"
+                                            BorderThickness="1"
+                                            CornerRadius="10">
+                                            <Calendar Name="PART_Calendar" SelectedDate="{Binding Path=SelectedDate, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                                        </Border>
+                                    </Popup>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </UserControl.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="40" />
+            <RowDefinition Height="60px" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,5">
+        <Grid
+            Grid.Row="0"
+            Height="60px"
+            Margin="0,0,0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="20" />
-                <!--  Column for TextBlock  -->
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="250px" />
                 <!--  Column for ComboBox  -->
             </Grid.ColumnDefinitions>
 
@@ -311,14 +373,16 @@
                 FontSize="24"
                 FontWeight="Bold"
                 Grid.Column="0"
+                Height="60px"
                 Text="Users"
                 VerticalAlignment="Center" />
 
             <Border
                 BorderBrush="Gray"
                 BorderThickness="1"
-                CornerRadius="10"
+                CornerRadius="20"
                 Grid.Column="2"
+                Height="45px"
                 Margin="10,0,0,0">
                 <ComboBox
                     DisplayMemberPath="name"
@@ -327,7 +391,6 @@
                     SelectionChanged="BranchComboBox_SelectionChanged"
                     Style="{StaticResource RoundComboBox}"
                     VerticalAlignment="Center"
-                    Width="200"
                     x:Name="BranchComboBox" />
             </Border>
 
@@ -335,165 +398,438 @@
         <Grid Grid.Row="1">
 
             <Grid x:Name="MainGrid">
-                <!--  Loading Overlay  -->
-                <Border
-                    Background="#80000000"
-                    HorizontalAlignment="Center"
-                    Padding="20"
-                    VerticalAlignment="Center"
-                    Visibility="Collapsed"
-                    x:Name="LoadingOverlay">
-                    <!--  Hidden by default  -->
-                    <StackPanel>
-                        <TextBlock
-                            FontSize="20"
-                            Foreground="White"
-                            HorizontalAlignment="Center"
-                            Text="Loading..." />
-                        <ProgressBar IsIndeterminate="True" Width="200" />
-                    </StackPanel>
-                </Border>
+
                 <!--  Main Content  -->
                 <Border
                     BorderBrush="#E5E7EB"
                     BorderThickness="1"
                     CornerRadius="24">
-                    <StackPanel Margin="10">
-                        <TextBlock
-                            FontSize="24"
-                            FontWeight="Bold"
-                            Margin="0,10,0,10"
-                            Text="List Users" />
-                        <TextBlock
-                            FontSize="16"
-                            Margin="0,10,0,10"
-                            Text="List here..." />
+                    <Grid Margin="10">
+
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="300" />
+                                <ColumnDefinition Width="500" />
+                                <ColumnDefinition Width="10" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <!-- <Grid Grid.Column="0" Margin="0,10,0,10"> -->
-                            <!--     <Grid.ColumnDefinitions> -->
-                            <!--         <ColumnDefinition Width="*" /> -->
-                            <!--         <ColumnDefinition Width="Auto" /> -->
-                            <!--     </Grid.ColumnDefinitions> -->
-                            <!--  <TextBox  -->
-                            <!--  FontSize="16"  -->
-                            <!--  Grid.Column="0"  -->
-                            <!--  Style="{StaticResource NormalInput}"  -->
-                            <!--  Text="Filter products" />  -->
-                            <!--  <Button  -->
-                            <!--  Background="Transparent"  -->
-                            <!--  BorderBrush="Transparent"  -->
-                            <!--  Grid.Column="1">  -->
-                            <!--  <faWPF:ImageAwesome  -->
-                            <!--  Foreground="Gray"  -->
-                            <!--  Height="20"  -->
-                            <!--  Icon="Search"  -->
-                            <!--  Width="20" />  -->
-                            <!--     </Button> -->
-                            <!-- </Grid> -->
-                        </Grid>
-                        <Border
-                            BorderBrush="#E5E7EB"
-                            BorderThickness="1"
-                            CornerRadius="20"
-                            Padding="10">
-                            <StackPanel>
-                                <!--  Header Row  -->
-                                <Border
-                                    BorderBrush="#E5E7EB"
-                                    BorderThickness="0,0,0,1"
-                                    CornerRadius="20,20,0,0">
-                                    <Grid Background="#F9FAFB">
+                            <Border
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="20"
+                                Grid.Column="0"
+                                Padding="10">
+                                <StackPanel>
+                                    <!--  Header Row  -->
+                                    <Border
+                                        BorderBrush="#E5E7EB"
+                                        BorderThickness="0,0,0,1"
+                                        CornerRadius="20,20,0,0">
+                                        <Grid Background="#F9FAFB">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150" />
+                                                <ColumnDefinition Width="200" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock
+                                                FontSize="18"
+                                                Grid.Column="0"
+                                                Margin="5"
+                                                Text="Users id"
+                                                VerticalAlignment="Center" />
+                                            <TextBlock
+                                                FontSize="18"
+                                                Grid.Column="1"
+                                                Margin="5"
+                                                Text="Name"
+                                                VerticalAlignment="Center" />
+
+                                        </Grid>
+                                    </Border>
+                                    <!--  Sample Data Rows  -->
+                                    <ItemsControl ItemsSource="{Binding FilteredUsers}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border
+                                                    BorderBrush="#E5E7EB"
+                                                    BorderThickness="0,0,0,1"
+                                                    MouseLeftButtonUp="OnUserItemClicked">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="150" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock
+                                                            FontSize="18"
+                                                            Grid.Column="0"
+                                                            Margin="5"
+                                                            Text="{Binding user_id}"
+                                                            VerticalAlignment="Center" />
+                                                        <TextBlock
+                                                            FontSize="18"
+                                                            Grid.Column="1"
+                                                            Margin="5"
+                                                            Text="{Binding user_name}"
+                                                            VerticalAlignment="Center" />
+                                                        <Button
+                                                            Background="{StaticResource ErrorBrush}"
+                                                            BorderThickness="0"
+                                                            Click="OnDeleteButtonClick"
+                                                            Grid.Column="2"
+                                                            Height="50"
+                                                            Margin="5"
+                                                            Padding="10"
+                                                            Width="50"
+                                                            x:Name="DeleteButton">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <!--  Mặc định ẩn  -->
+                                                                    <Setter Property="Template">
+                                                                        <Setter.Value>
+                                                                            <ControlTemplate TargetType="Button">
+                                                                                <Border
+                                                                                    Background="{TemplateBinding Background}"
+                                                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                                                    CornerRadius="10">
+                                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                                </Border>
+                                                                            </ControlTemplate>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding DataContext.PermisionDelete, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="1">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                            <faWpf:ImageAwesome
+                                                                Foreground="White"
+                                                                Height="15"
+                                                                Icon="Trash"
+                                                                Width="15" />
+                                                        </Button>
+
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!--  Add more Border elements here for each row  -->
+                                </StackPanel>
+                            </Border>
+                            <Border
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                CornerRadius="20"
+                                Grid.Column="2"
+                                Padding="20">
+                                <StackPanel>
+                                    <Grid Margin="0,10,0,0">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="150" />
                                             <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="10" />
                                             <ColumnDefinition Width="200" />
-                                            <ColumnDefinition Width="50" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="200" />
                                         </Grid.ColumnDefinitions>
 
                                         <TextBlock
-                                            FontSize="18"
-                                            Grid.Column="0"
-                                            Margin="5"
-                                            Text="Users id"
-                                            VerticalAlignment="Center" />
-                                        <TextBlock
-                                            FontSize="18"
-                                            Grid.Column="1"
-                                            Margin="5"
-                                            Text="Name"
-                                            VerticalAlignment="Center" />
-                                        <TextBlock
-                                            FontSize="18"
+                                            FontSize="24"
+                                            FontWeight="Bold"
+                                            Margin="0,0,0,10">
+                                            Detail
+                                        </TextBlock>
+                                        <Button
+                                            Background="{StaticResource BillOrangeColorBrush}"
+                                            Click="OnSaveButtonClick"
+                                            FontSize="20"
+                                            Foreground="White"
                                             Grid.Column="2"
-                                            Margin="6"
-                                            Text="Phone"
-                                            VerticalAlignment="Center" />
-                                        <TextBlock
-                                            FontSize="18"
-                                            Grid.Column="3"
-                                            Margin="7"
-                                            Text="Permission"
-                                            VerticalAlignment="Center" />
+                                            x:Name="SaveButton">
+                                            Save
+                                        </Button>
+                                        <Button
+                                            Background="{StaticResource InfoBrush}"
+                                            FontSize="20"
+                                            Foreground="White"
+                                            Grid.Column="4"
+                                            x:Name="PrintBillButton">
+                                            Print Bill
+                                        </Button>
+                                        <Button
+                                            Background="{StaticResource WarningBrush}"
+                                            Click="OnCancelButtonClick"
+                                            FontSize="20"
+                                            Foreground="White"
+                                            Grid.Column="6"
+                                            x:Name="CancelButton">
+                                            Cancel
+                                        </Button>
+
                                     </Grid>
-                                </Border>
-                                <!--  Sample Data Rows  -->
-                                <ItemsControl ItemsSource="{Binding FilteredUsers}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1">
-                                                <Grid>
+                                    <Grid Height="120px" Margin="0,20,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <!--  Cột 0 chứa User ID  -->
+                                            <ColumnDefinition Width="Auto" x:Name="UserIDColumn" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="300" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="150" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="200" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!--  StackPanel for User ID  -->
+                                        <StackPanel
+                                            Grid.Column="0"
+                                            Height="100px"
+                                            Visibility="Collapsed"
+                                            x:Name="UserIDPanel">
+                                            <TextBlock FontSize="20" Margin="0,0,0,10">User ID</TextBlock>
+                                            <TextBox
+                                                FontSize="20"
+                                                Style="{DynamicResource NormalInput}"
+                                                x:Name="UserIDTextBox" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2" Height="100px">
+                                            <TextBlock FontSize="20" Margin="0,0,0,10">Name</TextBlock>
+                                            <TextBox
+                                                FontSize="20"
+                                                Style="{DynamicResource NormalInput}"
+                                                x:Name="UserNameTextBox" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="4" Height="100px">
+                                            <TextBlock FontSize="20" Margin="0,0,0,10">Rate</TextBlock>
+                                            <TextBox
+                                                FontSize="20"
+                                                Style="{DynamicResource NormalInput}"
+                                                x:Name="RateTextBox" />
+                                        </StackPanel>
+
+                                        <StackPanel
+                                            Grid.Column="6"
+                                            Height="100px"
+                                            Visibility="Collapsed"
+                                            x:Name="PasswordPanel">
+                                            <TextBlock FontSize="20" Margin="0,0,0,10">Password</TextBlock>
+                                            <TextBox
+                                                FontSize="20"
+                                                Style="{DynamicResource NormalInput}"
+                                                x:Name="PasswordTextBox" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid
+                                        Height="120px"
+                                        Margin="0,20,0,0"
+                                        x:Name="PermissionGrid">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="300" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="300" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="200" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Height="100px">
+                                            <TextBlock FontSize="20" Margin="0,0,0,10">Permission</TextBlock>
+                                            <Border
+                                                BorderBrush="Gray"
+                                                BorderThickness="1"
+                                                CornerRadius="20"
+                                                Height="50px"
+                                                Margin="10,0,0,0">
+                                                <ComboBox
+                                                    FontSize="18"
+                                                    Style="{StaticResource RoundComboBox}"
+                                                    VerticalAlignment="Center"
+                                                    Width="180"
+                                                    x:Name="PermissionComboBox">
+                                                    <ComboBoxItem Content="CASHIER" />
+                                                    <ComboBoxItem Content="STAFF" />
+                                                </ComboBox>
+
+                                            </Border>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Height="100px">
+                                            <TextBlock FontSize="20" Margin="0,0,0,10">From Date</TextBlock>
+                                            <DatePicker
+                                                FirstDayOfWeek="Monday"
+                                                FontSize="18"
+                                                Padding="0"
+                                                SelectedDateFormat="Long"
+                                                Style="{DynamicResource RoundedDatePickerStyle}"
+                                                x:Name="DatePickerInputFrom" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="4" Height="100px">
+                                            <TextBlock FontSize="20" Margin="0,0,0,10">To Date</TextBlock>
+                                            <DatePicker
+                                                FirstDayOfWeek="Monday"
+                                                FontSize="18"
+                                                Padding="0"
+                                                SelectedDateFormat="Long"
+                                                Style="{DynamicResource RoundedDatePickerStyle}"
+                                                x:Name="DatePickerInputTo" />
+                                        </StackPanel>
+                                        <Button
+                                            Background="{DynamicResource UserFilterColor}"
+                                            Click="OnFilterButtonClick"
+                                            FontSize="20"
+                                            Foreground="White"
+                                            Grid.Column="6"
+                                            Margin="0,20,0,0">
+                                            Filter
+                                        </Button>
+                                    </Grid>
+
+                                    <Border
+                                        BorderBrush="#E5E7EB"
+                                        BorderThickness="1"
+                                        CornerRadius="20"
+                                        Grid.Row="1"
+                                        Padding="10">
+                                        <StackPanel>
+                                            <!--  Header Row  -->
+                                            <Border
+                                                BorderBrush="#E5E7EB"
+                                                BorderThickness="0,0,0,1"
+                                                CornerRadius="20,20,0,0">
+                                                <Grid Background="#F9FAFB">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="150" />
                                                         <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="100" />
+                                                        <ColumnDefinition Width="250" />
                                                         <ColumnDefinition Width="50" />
+                                                        <ColumnDefinition Width="100" />
                                                     </Grid.ColumnDefinitions>
 
                                                     <TextBlock
                                                         FontSize="18"
                                                         Grid.Column="0"
                                                         Margin="5"
-                                                        Text="{Binding product_id}"
+                                                        Text="Bill id"
+                                                        TextAlignment="Center"
                                                         VerticalAlignment="Center" />
                                                     <TextBlock
                                                         FontSize="18"
                                                         Grid.Column="1"
                                                         Margin="5"
-                                                        Text="{Binding product_name}"
+                                                        Text="Customer name"
+                                                        TextAlignment="Center"
                                                         VerticalAlignment="Center" />
                                                     <TextBlock
                                                         FontSize="18"
                                                         Grid.Column="2"
                                                         Margin="5"
-                                                        Text="{Binding price}"
+                                                        Text="Date"
+                                                        TextAlignment="Center"
                                                         VerticalAlignment="Center" />
-                                                    <Button
-                                                        Background="{StaticResource ErrorBrush}"
-                                                        Grid.Column="3"
+                                                    <TextBlock
+                                                        FontSize="18"
+                                                        Grid.Column="4"
                                                         Margin="5"
-                                                        Style="{StaticResource IconButtonStyle}"
-                                                        x:Name="DeleteButton">
-                                                        <faWPF:ImageAwesome
-                                                            Foreground="White"
-                                                            Height="15"
-                                                            Icon="Trash"
-                                                            Width="15" />
-                                                    </Button>
+                                                        Text="Total Price"
+                                                        TextAlignment="Center"
+                                                        VerticalAlignment="Center" />
                                                 </Grid>
                                             </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                            <!--  Loading Overlay  -->
+                                            <Border
+                                                Background="Gray"
+                                                HorizontalAlignment="Center"
+                                                Padding="20"
+                                                VerticalAlignment="Center"
+                                                Visibility="Collapsed"
+                                                x:Name="LoadingOverlay">
+                                                <!--  Hidden by default  -->
+                                                <StackPanel>
+                                                    <TextBlock
+                                                        FontSize="20"
+                                                        Foreground="White"
+                                                        HorizontalAlignment="Center"
+                                                        Text="Loading..." />
+                                                    <ProgressBar IsIndeterminate="True" Width="200" />
+                                                </StackPanel>
+                                            </Border>
+                                            <!--  Sample Data Rows  -->
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                                <ItemsControl ItemsSource="{Binding FilteredBills}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="150" />
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="250" />
+                                                                        <ColumnDefinition Width="50" />
+                                                                        <ColumnDefinition Width="100" />
+                                                                    </Grid.ColumnDefinitions>
 
-                                <!--  Add more Border elements here for each row  -->
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
+                                                                    <TextBlock
+                                                                        FontSize="18"
+                                                                        Grid.Column="0"
+                                                                        Margin="5"
+                                                                        Text="{Binding bill_id}"
+                                                                        TextAlignment="Center"
+                                                                        VerticalAlignment="Center" />
+                                                                    <TextBlock
+                                                                        FontSize="18"
+                                                                        Grid.Column="1"
+                                                                        Margin="5"
+                                                                        Text="{Binding customer_name}"
+                                                                        TextAlignment="Center"
+                                                                        VerticalAlignment="Center" />
+                                                                    <TextBlock
+                                                                        FontSize="18"
+                                                                        Grid.Column="2"
+                                                                        Margin="5"
+                                                                        TextAlignment="Center"
+                                                                        VerticalAlignment="Center">
+                                                                        <TextBlock.Text>
+                                                                            <Binding Path="updated_at" StringFormat="{}{0} $" />
+                                                                        </TextBlock.Text>
+                                                                    </TextBlock>
+                                                                    <TextBlock
+                                                                        FontSize="18"
+                                                                        Grid.Column="4"
+                                                                        Margin="5"
+                                                                        TextAlignment="Center"
+                                                                        VerticalAlignment="Center">
+                                                                        <TextBlock.Text>
+                                                                            <Binding Path="total_price" StringFormat="{}{0} $" />
+                                                                        </TextBlock.Text>
+                                                                    </TextBlock>
+
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+
+                                            <!--  Add more Border elements here for each row  -->
+                                        </StackPanel>
+
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                    </Grid>
                 </Border>
 
 

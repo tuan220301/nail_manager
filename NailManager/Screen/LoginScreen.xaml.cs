@@ -34,11 +34,16 @@ namespace NailManager.Screen
         private void ApplyColors()
         {
             var colors = new ColorsDefault();
-            Application.Current.Resources["BillOrangeColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillOrange));
-            Application.Current.Resources["BillMainLightColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillMainLight));
-            Application.Current.Resources["BillMainDarkColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillMainDark));
-            Application.Current.Resources["BillSecondaryColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillSecondary));
-            Application.Current.Resources["BillSandColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillSand));
+            Application.Current.Resources["BillOrangeColor"] =
+                new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillOrange));
+            Application.Current.Resources["BillMainLightColor"] =
+                new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillMainLight));
+            Application.Current.Resources["BillMainDarkColor"] =
+                new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillMainDark));
+            Application.Current.Resources["BillSecondaryColor"] =
+                new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillSecondary));
+            Application.Current.Resources["BillSandColor"] =
+                new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors.BillSand));
         }
 
         private void InitializeSvgRendering()
@@ -87,74 +92,73 @@ namespace NailManager.Screen
         }
 
         private async void Submit(object sender, RoutedEventArgs e)
-{
-    LoginLoadingIcon.Visibility = Visibility.Visible;
-    string username = UsernameTextBox.Text;
-    string password = PasswordBox.Password;
-    
-    // Log giá trị username và password
-    Console.WriteLine($"username: {username}");
-    Console.WriteLine($"password: {password}");
-    
-    if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-    {
-        ErrorMessageTextBlock.Text = "Please fill in both fields.";
-        ErrorMessageTextBlock.Visibility = Visibility.Visible;
-        LoginLoadingIcon.Visibility = Visibility.Collapsed;
-    }
-    else
-    {
-        var user = new { user_name = username, password = password };
-        
-        string json = JsonConvert.SerializeObject(user);
-        ApiConnect apiString = new ApiConnect();
-        using (var client = new HttpClient())
         {
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await client.PostAsync($"{apiString.Url}/auth/login", content);
-            
-            // Log response
-            // Console.WriteLine($"response: {response.ToString()}");
-            
-            if (response.IsSuccessStatusCode)
-            // if(user.user_name == "user" && password == "user")
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                LoginRespon? responseData = JsonConvert.DeserializeObject<LoginRespon>(responseBody);
-                
-                // Log responseData
-                // Console.WriteLine($"responseData: {responseData}");
-                Console.WriteLine("Status: " + responseData.status);
-                if (response.StatusCode == (HttpStatusCode)200)
-                {
-                Console.WriteLine("Message: " + responseData.message);
-                Console.WriteLine("Message: " + responseData.data.access_token);
-                DataRespon data = responseData.data;
-                // Save user to database if needed
-                await DatabaseHelper.SaveUserAsync(new User
-                {
+            LoginLoadingIcon.Visibility = Visibility.Visible;
+            string username = UsernameTextBox.Text;
+            string password = PasswordBox.Password;
 
-                    UserName= data.user_name, 
-                    AccessToken = data.access_token,
-                    Name = data.user_name,
-                    UserId = Parse(data.user_id),
-                    Permission = data.permision,
-                });
-                }
-                
-                LoginLoadingIcon.Visibility = Visibility.Collapsed;
-                LoginSuccessful?.Invoke(this, EventArgs.Empty);
-            }
-            else
+            // Log giá trị username và password
+            Console.WriteLine($"username: {username}");
+            Console.WriteLine($"password: {password}");
+
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
-                ErrorMessageTextBlock.Text = "Invalid username or password.";
+                ErrorMessageTextBlock.Text = "Please fill in both fields.";
                 ErrorMessageTextBlock.Visibility = Visibility.Visible;
                 LoginLoadingIcon.Visibility = Visibility.Collapsed;
             }
-        }
-    }
-}
+            else
+            {
+                var user = new { user_name = username, password = password };
 
+                string json = JsonConvert.SerializeObject(user);
+                ApiConnect apiString = new ApiConnect();
+                using (var client = new HttpClient())
+                {
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    var response = await client.PostAsync($"{apiString.Url}/auth/login", content);
+
+                    // Log response
+                    // Console.WriteLine($"response: {response.ToString()}");
+
+                    if (response.IsSuccessStatusCode)
+                        // if(user.user_name == "user" && password == "user")
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        LoginRespon? responseData = JsonConvert.DeserializeObject<LoginRespon>(responseBody);
+
+                        // Log responseData
+                        // Console.WriteLine($"responseData: {responseData}");
+                        // Console.WriteLine("Status: " + responseData.status);
+                        if (response.StatusCode == (HttpStatusCode)200)
+                        {
+                            // Console.WriteLine("Message: " + responseData.message);
+                            // Console.WriteLine("Message: " + responseData.data.access_token);
+                            DataRespon data = responseData.data;
+                            // Save user to database if needed
+                            await DatabaseHelper.SaveUserAsync(new User
+                            {
+                                UserName = data.user_name,
+                                AccessToken = data.access_token,
+                                Name = data.user_name,
+                                UserId = Parse(data.user_id),
+                                Permission = data.permision,
+                                BranchId = data.branch_id
+                            });
+                        }
+
+                        LoginLoadingIcon.Visibility = Visibility.Collapsed;
+                        LoginSuccessful?.Invoke(this, EventArgs.Empty);
+                    }
+                    else
+                    {
+                        ErrorMessageTextBlock.Text = "Invalid username or password.";
+                        ErrorMessageTextBlock.Visibility = Visibility.Visible;
+                        LoginLoadingIcon.Visibility = Visibility.Collapsed;
+                    }
+                }
+            }
+        }
 
 
         private void SubmitKeyDown(object sender, KeyEventArgs e)

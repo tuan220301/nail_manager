@@ -61,14 +61,21 @@ namespace NailManager.Layout
             {
                 if (child is Button btn)
                 {
-                    btn.Visibility = Visibility.Collapsed;
+                    if (btn.Tag.ToString() == "Employee")
+                    {
+                        btn.Visibility = Visibility.Visible; // Nút Employee luôn hiển thị
+                    }
+                    else
+                    {
+                        btn.Visibility = Visibility.Collapsed; // Ẩn các nút khác
+                    }
                 }
             }
 
             // Kiểm tra quyền và hiển thị menu tương ứng
             if (permission.Contains("1"))
             {
-                AdminButton.Visibility = Visibility.Visible;
+                // AdminButton.Visibility = Visibility.Visible;
                 // Hiển thị tất cả menu
                 foreach (var child in SidebarPanel.Children)
                 {
@@ -79,10 +86,10 @@ namespace NailManager.Layout
                 }
             }
 
-            else
-            {
-                AdminButton.Visibility = Visibility.Collapsed;
-            }
+            // else
+            // {
+            //     AdminButton.Visibility = Visibility.Collapsed;
+            // }
         }
         private void ShowMenuByTag(string tag)
         {
