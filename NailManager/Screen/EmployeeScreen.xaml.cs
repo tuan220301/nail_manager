@@ -66,7 +66,21 @@ namespace NailManager.Screen
 
         private async void OnUserItemClicked(object sender, MouseButtonEventArgs e)
         {
+            // Nếu không phải admin thì hiển thị modal xác thực
+            if (permision != "1")
+            {
+                AuthenticationWindow authWindow = new AuthenticationWindow();
+                bool? dialogResult = authWindow.ShowDialog();
+
+                // Nếu xác thực không thành công, thoát khỏi hàm
+                if (dialogResult != true)
+                {
+                    return;
+                }
+            }
+
             ShowLoading(true);
+
             if (sender is Border border && border.DataContext is UserFromListApi selectedUser)
             {
                 // Gán các giá trị từ dòng được chọn vào các TextBox
@@ -100,9 +114,18 @@ namespace NailManager.Screen
                 }
 
                 // Thiết lập thời gian bắt đầu và kết thúc cho ngày hiện tại
-                DateTime today = DateTime.Now.Date;
-                string startDay = today.ToString("yyyy-MM-dd 00:00:00");
-                string endDay = today.ToString("yyyy-MM-dd 23:59:59");
+                TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
+                // DateTime today = DateTime.Now.Date;
+                DateTime fromDate = DateTime.Today;
+                DateTime toDate = DateTime.Today;
+                DateTime adjustedFromDate = fromDate.Add(-offset);
+                DateTime adjustedToDate = toDate.Add(-offset).AddHours(23).AddMinutes(59).AddSeconds(59);
+
+                // Chuyển đổi fromDate và toDate thành chuỗi theo định dạng yêu cầu
+                string startDay = adjustedFromDate.ToString("yyyy-MM-dd HH:mm:ss");
+                string endDay = adjustedToDate.ToString("yyyy-MM-dd HH:mm:ss");
+                // string startDay = today.ToString("yyyy-MM-dd 00:00:00");
+                // string endDay = today.ToString("yyyy-MM-dd 23:59:59");
 
                 // Lấy user_id và branch_id
                 int userId = selectedUser.user_id;
@@ -136,7 +159,7 @@ namespace NailManager.Screen
                         else
                         {
                             ShowLoading(false);
-                            MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
+                            Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
                         }
                     }
                 }
@@ -147,6 +170,7 @@ namespace NailManager.Screen
                 }
             }
         }
+
 
         private async void GetUser()
         {

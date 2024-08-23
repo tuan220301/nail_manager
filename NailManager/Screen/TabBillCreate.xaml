@@ -637,6 +637,16 @@
                     Margin="0,0,0,10"
                     Style="{StaticResource RoundComboBox}"
                     x:Name="StaffComboBox" />
+                <TextBlock>Payment</TextBlock>
+                <ComboBox
+                    FontSize="16"
+                    Margin="0,0,0,10"
+                    SelectedIndex="0"
+                    Style="{StaticResource RoundComboBox}"
+                    x:Name="PaymentMethod">
+                    <ComboBoxItem Content="Cash" Tag="1" />
+                    <ComboBoxItem Content="Credit" Tag="2" />
+                </ComboBox>
                 <TextBlock
                     FontSize="18"
                     FontWeight="Bold"

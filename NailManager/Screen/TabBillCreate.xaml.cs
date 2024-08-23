@@ -539,92 +539,110 @@ public partial class TabBillCreate : UserControl
     }
 
     private async void CreateBill_Click(object sender, RoutedEventArgs e)
+{
+    // Kiểm tra đầu vào xem có đầy đủ thông tin chưa
+    if (string.IsNullOrWhiteSpace(CustomerNameTextBox.Text) ||
+        string.IsNullOrWhiteSpace(PhoneNumberTextBox.Text) ||
+        StaffComboBox.SelectedItem == null ||
+        PaymentMethod.SelectedItem == null || // Kiểm tra giá trị của ComboBox PaymentMethod
+        !SelectedItems.Any())
     {
-        if (string.IsNullOrWhiteSpace(CustomerNameTextBox.Text) ||
-            string.IsNullOrWhiteSpace(PhoneNumberTextBox.Text) ||
-            StaffComboBox.SelectedItem == null ||
-            !SelectedItems.Any())
+        MessageBox.Show("Vui lòng điền đầy đủ thông tin và chọn ít nhất một sản phẩm.", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return; // Dừng quá trình nếu thông tin không đầy đủ
+    }
+
+    ShowLoading(true); // Hiển thị loading
+    try
+    {
+        // Lấy thông tin từ form
+        string customerName = CustomerNameTextBox.Text;
+        string customerPhone = CustomerNameTextBox.Text;
+
+        // Lấy thông tin nhân viên từ ComboBox
+        var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;
+        int userId = selectedUser?.user_id ?? 0;
+        string branchId = BranchComboBox.SelectedValue.ToString();
+
+        // Lấy giá trị phương thức thanh toán từ ComboBox, xử lý nếu null
+        int paymentMethod = PaymentMethod.SelectedItem != null 
+                            ? int.Parse(((ComboBoxItem)PaymentMethod.SelectedItem).Tag.ToString()) 
+                            : 0; // Hoặc giá trị mặc định, cần xử lý theo logic của bạn
+
+        // Kiểm tra lại nếu paymentMethod là 0
+        if (paymentMethod == 0)
         {
-            MessageBox.Show("Vui lòng điền đầy đủ thông tin và chọn ít nhất một sản phẩm.", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return; // Dừng quá trình nếu thông tin không đầy đủ
+            MessageBox.Show("Vui lòng chọn phương thức thanh toán.", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
         }
-        ShowLoading(true); // Hiển thị loading
-        try
+
+        // Danh sách sản phẩm được chọn
+        var productIds = SelectedItems.Select(item => item.product_id).ToList();
+
+        // Tạo object chứa các tham số theo đúng định dạng JSON yêu cầu
+        var parameters = new
         {
-            // Lấy thông tin từ form
-            string customerName = CustomerNameTextBox.Text;
-            string customerPhone = PhoneNumberTextBox.Text;
+            customer_name = customerName,
+            customer_phone = customerPhone,
+            branch_id = branchId,
+            user_id = userId,
+            discount = 0,
+            pay_method = paymentMethod,
+            products = productIds
+        };
 
-            // Lấy thông tin nhân viên từ ComboBox
-            var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;
-            int userId = selectedUser?.user_id ?? 0;
-            string branchId = BranchComboBox.SelectedValue.ToString();
+        // Chuyển đổi object parameters thành chuỗi JSON
+        string jsonContent = JsonConvert.SerializeObject(parameters);
 
-            // Danh sách sản phẩm được chọn
-            var productIds = SelectedItems.Select(item => item.product_id).ToList();
+        // In chuỗi JSON ra để kiểm tra
+        Console.WriteLine("JSON Content:");
+        Console.WriteLine(jsonContent);
 
-            // Tạo object chứa các tham số theo đúng định dạng JSON yêu cầu
-            var parameters = new
+        // Đường dẫn API
+        var api = new ApiConnect();
+        string url = api.Url + "/bill/create"; // Thay bằng endpoint thực tế của bạn
+        Console.WriteLine("url: " + url);
+        
+        // Thực hiện gọi API với dữ liệu JSON
+        using (var httpClient = new HttpClient())
+        {
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
             {
-                customer_name = customerName,
-                customer_phone = customerPhone,
-                branch_id = branchId,
-                user_id = userId,
-                discount = 0,
-                products = productIds
-            };
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<BranchApiResponse<BillResponseData>>(responseBody);
 
-            // Chuyển đổi object parameters thành chuỗi JSON
-            string jsonContent = JsonConvert.SerializeObject(parameters);
-
-            // In chuỗi JSON ra để kiểm tra
-            Console.WriteLine("JSON Content:");
-            Console.WriteLine(jsonContent);
-
-            // Đường dẫn API
-            var api = new ApiConnect();
-            string url = api.Url + "/bill/create"; // Thay bằng endpoint thực tế của bạn
-            Console.WriteLine("url: " + url);
-            // Thực hiện gọi API với dữ liệu JSON
-            using (var httpClient = new HttpClient())
-            {
-                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                var response = await httpClient.PostAsync(url, content);
-
-                if (response.IsSuccessStatusCode)
+                if (responseData != null && responseData.status == 200)
                 {
-                    var responseBody = await response.Content.ReadAsStringAsync();
-                    var responseData = JsonConvert.DeserializeObject<BranchApiResponse<BillResponseData>>(responseBody);
-
-                    if (responseData != null && responseData.status == 200)
-                    {
-                        Console.WriteLine("Create success");
-                        Console.WriteLine(responseData.data);
-                        // Nếu lưu thành công, thực hiện in hóa đơn
-                        FlowDocument document = CreateBillDocument();
-                        PrintBill(document);
-                        ClearInputs();
-                    }
-                    else
-                    {
-                        Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
-                    }
+                    Console.WriteLine("Create success");
+                    Console.WriteLine(responseData.data);
+                    // Nếu lưu thành công, thực hiện in hóa đơn
+                    FlowDocument document = CreateBillDocument();
+                    PrintBill(document);
+                    ClearInputs();
                 }
                 else
                 {
-                    Console.WriteLine("Failed to create the bill.");
+                    Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
-        finally
-        {
-            ShowLoading(false); // Ẩn loading khi hoàn tất
+            else
+            {
+                Console.WriteLine("Failed to create the bill.");
+            }
         }
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+    }
+    finally
+    {
+        ShowLoading(false); // Ẩn loading khi hoàn tất
+    }
+}
+
 
     private void PrintBill(FlowDocument document)
     {

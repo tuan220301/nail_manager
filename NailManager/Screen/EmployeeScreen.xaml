@@ -435,7 +435,7 @@
                                                 FontSize="18"
                                                 Grid.Column="0"
                                                 Margin="5"
-                                                Text="Users id"
+                                                Text="User Id"
                                                 VerticalAlignment="Center" />
                                             <TextBlock
                                                 FontSize="18"

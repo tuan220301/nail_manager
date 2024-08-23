@@ -12,6 +12,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
         <models:StatusToTextConverter x:Key="StatusToTextConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <Color x:Key="BillOrangeColor">#FF8811</Color>
         <Color x:Key="BillMainLightColor">#FFFBF0</Color>
         <Color x:Key="BillSecondaryColor">#9DD9D2</Color>
@@ -541,10 +542,14 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="100" />
                     <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="100" />
-                    <ColumnDefinition Width="250" />
-                    <ColumnDefinition Width="100" />
-                    <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="120" />
                 </Grid.ColumnDefinitions>
                 <TextBlock
                     DockPanel.Dock="Top"
@@ -572,31 +577,102 @@
                         Width="200"
                         x:Name="BranchComboBox" />
                 </Border>
-
-                <TextBlock
-                    FontSize="20"
-                    Grid.Column="2"
-                    HorizontalAlignment="Center"
-                    TextAlignment="Center"
-                    VerticalAlignment="Center">
-                    Bill ID
-                </TextBlock>
-                <TextBox
-                    Grid.Column="3"
-                    Style="{StaticResource NormalInput}"
-                    x:Name="BillIdTextBoxFilter" />
-                <TextBlock
-                    FontSize="20"
-                    Grid.Column="4"
-                    HorizontalAlignment="Center"
-                    TextAlignment="Center"
-                    VerticalAlignment="Center">
-                    Status
-                </TextBlock>
-                <TextBox
-                    Grid.Column="5"
-                    Style="{StaticResource NormalInput}"
-                    x:Name="StatusTextBoxFilter" />
+                <Border Grid.Column="3">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="50" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            FontSize="20"
+                            Grid.Column="0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                            Total:
+                        </TextBlock>
+                        <TextBlock
+                            FontSize="20"
+                            Grid.Column="2"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            x:Name="TotalBill">
+                            Total
+                        </TextBlock>
+                    </Grid>
+                </Border>
+                <Border Grid.Column="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="50" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            FontSize="20"
+                            Grid.Column="0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                            Price:
+                        </TextBlock>
+                        <TextBlock
+                            FontSize="20"
+                            Grid.Column="2"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            x:Name="TotalMoney">
+                            Total
+                        </TextBlock>
+                    </Grid>
+                </Border>
+                <Border Grid.Column="7">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="50" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            FontSize="20"
+                            Grid.Column="0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                            Credit:
+                        </TextBlock>
+                        <TextBlock
+                            FontSize="20"
+                            Grid.Column="2"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            x:Name="TotalCredit">
+                            Credit
+                        </TextBlock>
+                    </Grid>
+                </Border>
+                <Border Grid.Column="9">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="50" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            FontSize="20"
+                            Grid.Column="0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                            Cash:
+                        </TextBlock>
+                        <TextBlock
+                            FontSize="20"
+                            Grid.Column="2"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            x:Name="TotalCash">
+                            cash
+                        </TextBlock>
+                    </Grid>
+                </Border>
             </Grid>
             <Border
                 BorderBrush="#E5E7EB"
@@ -638,16 +714,49 @@
                             Margin="0,0,0,10"
                             Padding="10">
                             <StackPanel>
-                                <TextBlock
-                                    FontSize="24"
-                                    FontWeight="Bold"
-                                    Foreground="#374151"
-                                    Margin="10,0,0,10"
-                                    Text="Bill Information" />
-                                <Border
-                                    BorderBrush="#E5E7EB"
-                                    BorderThickness="0,0,0,1"
-                                    CornerRadius="20,20,0,0">
+                                <Grid Height="55">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="50" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="150" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        FontSize="20"
+                                        Grid.Column="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                        Bill ID
+                                    </TextBlock>
+                                    <TextBox
+                                        FontSize="20"
+                                        Grid.Column="2"
+                                        KeyDown="BillIdTextBox_KeyDown"
+                                        VerticalAlignment="Center"
+                                        x:Name="BillIdSearch" />
+                                    <Button
+                                        Background="{DynamicResource BillOrangeColorBrush}"
+                                        Click="SearchButton_Click"
+                                        FontSize="20"
+                                        Foreground="white"
+                                        Grid.Column="4"
+                                        Style="{DynamicResource ButtonSearch}">
+                                        Search
+                                    </Button>
+                                    <Button
+                                        Background="Aquamarine"
+                                        Click="CancelButton_Click"
+                                        FontSize="20"
+                                        Foreground="Black"
+                                        Grid.Column="6"
+                                        Style="{DynamicResource ButtonSearch}">
+                                        Cancel
+                                    </Button>
+                                </Grid>
+                                <Border BorderBrush="#E5E7EB" BorderThickness="0,1,0,1">
                                     <Grid Background="#F9FAFB">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="150" />
@@ -697,7 +806,8 @@
                                 <ScrollViewer
                                     Height="250"
                                     Margin="0,10,0,0"
-                                    VerticalScrollBarVisibility="Auto">
+                                    VerticalScrollBarVisibility="Auto"
+                                    x:Name="BillListScroll">
                                     <ItemsControl ItemsSource="{Binding FilteredBill}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -770,7 +880,8 @@
                             BorderBrush="#E5E7EB"
                             BorderThickness="1"
                             CornerRadius="20"
-                            Padding="10">
+                            Padding="10"
+                            x:Name="ProductBorder">
                             <StackPanel>
                                 <TextBlock
                                     FontSize="24"
@@ -875,9 +986,9 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </ScrollViewer>
-
                             </StackPanel>
                         </Border>
+
                     </StackPanel>
                     <Border
                         Background="LightYellow"
@@ -909,48 +1020,93 @@
                                         Width="20" />
                                 </Button>
                             </Grid>
-                            <TextBlock FontSize="18">Employee ID</TextBlock>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock FontSize="18">Employee ID</TextBlock>
+                                    <TextBox
+                                        FontSize="12"
+                                        Margin="0,0,0,10"
+                                        Style="{StaticResource NormalInput}"
+                                        Text=""
+                                        x:Name="UserIdTextBox" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock FontSize="18">Employee</TextBlock>
+                                    <TextBox
+                                        FontSize="12"
+                                        Margin="0,0,0,10"
+                                        Style="{StaticResource NormalInput}"
+                                        Text=""
+                                        x:Name="StaffTextBox" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock FontSize="18">Customer Name</TextBlock>
+                                    <TextBox
+                                        FontSize="12"
+                                        Margin="0,0,0,10"
+                                        Style="{StaticResource NormalInput}"
+                                        Text=""
+                                        x:Name="CustomerNameTextBox" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock FontSize="18">Customer Phone</TextBlock>
+                                    <TextBox
+                                        FontSize="12"
+                                        Margin="0,0,0,10"
+                                        Style="{StaticResource NormalInput}"
+                                        Text=""
+                                        x:Name="PhoneNumberTextBox" />
+                                </StackPanel>
+                            </Grid>
 
-                            <TextBox
-                                FontSize="12"
+                            <TextBlock
+                                FontSize="18"
+                                FontWeight="Bold"
+                                Grid.Column="2"
+                                Margin="0,10,0,5"
+                                Text="Payment: " />
+                            <ComboBox
+                                FontSize="16"
                                 Margin="0,0,0,10"
-                                Style="{StaticResource NormalInput}"
-                                Text=""
-                                x:Name="UserIdTextBox" />
-                            <TextBlock FontSize="18">Employee Name</TextBlock>
-                            <TextBox
-                                FontSize="12"
-                                Margin="0,0,0,10"
-                                Style="{StaticResource NormalInput}"
-                                Text=""
-                                x:Name="StaffTextBox" />
-                            <TextBlock FontSize="18">Customer Name</TextBlock>
-                            <TextBox
-                                FontSize="12"
-                                Margin="0,0,0,10"
-                                Style="{StaticResource NormalInput}"
-                                Text=""
-                                x:Name="CustomerNameTextBox" />
-                            <TextBlock FontSize="18">Customer Phone</TextBlock>
-                            <TextBox
-                                FontSize="12"
-                                Margin="0,0,0,10"
-                                Style="{StaticResource NormalInput}"
-                                Text=""
-                                x:Name="PhoneNumberTextBox" />
+                                SelectedIndex="0"
+                                Style="{StaticResource RoundComboBox}"
+                                x:Name="PaymentMethod">
+                                <ComboBoxItem Content="Cash" Tag="1" />
+                                <ComboBoxItem Content="Credit" Tag="2" />
+                            </ComboBox>
 
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="100" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    FontSize="18"
-                                    FontWeight="Bold"
-                                    Grid.Column="0"
-                                    Margin="0,10,0,5"
-                                    Text="Bill: " />
+                                <Grid Grid.Column="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="150" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        FontSize="18"
+                                        FontWeight="Bold"
+                                        Grid.Column="0"
+                                        Margin="0,10,0,5"
+                                        Text="Bill: " />
 
+                                </Grid>
                                 <TextBox
                                     FontSize="12"
                                     Grid.Column="1"

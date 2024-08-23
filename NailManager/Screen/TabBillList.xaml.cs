@@ -61,6 +61,18 @@ namespace NailManager.Screen
             }
         }
 
+        private bool _isAdmin;
+
+        public bool IsAdmin
+        {
+            get => _isAdmin;
+            set
+            {
+                _isAdmin = value;
+                OnPropertyChanged(nameof(IsAdmin));
+            }
+        }
+
         public bool IsProductSelected
         {
             get => _isProductSelected;
@@ -71,6 +83,7 @@ namespace NailManager.Screen
             }
         }
 
+        public string permision = "";
         public event PropertyChangedEventHandler PropertyChanged;
 
         public TabBillList()
@@ -164,7 +177,7 @@ namespace NailManager.Screen
                             UserIdTextBox.Text = billDetail.user_id.ToString();
                             StaffTextBox.Text = billDetail.name;
                             BillIdTextBox.Text = billDetail.bill_id.ToString();
-
+                            PaymentMethod.SelectedIndex = billDetail.pay_method == 1 ? 0 : 1;
                             SelectedItems.Clear();
                             foreach (var product in billDetail.products)
                             {
@@ -383,7 +396,7 @@ namespace NailManager.Screen
                             {
                                 FlowDocument document = CreateBillDocument();
                                 PrintBill(document);
-                                ClearOrderDetails();  
+                                ClearOrderDetails();
                             }
                         }
                         else
@@ -434,13 +447,16 @@ namespace NailManager.Screen
                     Console.WriteLine("Selected Branch Address: " + Address);
                     // Thực hiện các hành động khác với địa chỉ này, ví dụ hiển thị trên UI hoặc lưu trữ
                 }
+
                 GetListProduct(branchId);
                 GetBills(fromDate, toDate, branchId);
             }
         }
 
-        private async void GetBills(DateTime? fromDate = null, DateTime? toDate = null, int branchId = 0)
+        private async Task GetBills(DateTime? fromDate = null, DateTime? toDate = null, int branchId = 0,
+            int? billId = null)
         {
+            Console.WriteLine("get bills is called");
             ShowLoading(true);
 
             try
@@ -450,28 +466,61 @@ namespace NailManager.Screen
                 fromDate ??= DateTime.Today;
                 toDate ??= DateTime.Today;
 
-                string apiUrl = $"{_apiConnect.Url}/bill?branch_id={branchId}&status=1";
-                string startDay = fromDate.Value.ToString("yyyy-MM-dd 00:00:00");
-                string endDay = toDate.Value.ToString("yyyy-MM-dd 23:59:59");
+                // Lấy offset của múi giờ cục bộ so với UTC
+                TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
+                Console.WriteLine("gmt: " + offset.TotalHours + ':' + offset.Minutes);
+
+                // Điều chỉnh fromDate và toDate dựa trên offset của múi giờ cục bộ
+                DateTime adjustedFromDate = fromDate.Value.Add(-offset);
+                DateTime adjustedToDate = toDate.Value.Add(-offset).AddHours(23).AddMinutes(59).AddSeconds(59);
+
+                // Chuyển đổi fromDate và toDate thành chuỗi theo định dạng yêu cầu
+                string startDay = adjustedFromDate.ToString("yyyy-MM-dd HH:mm:ss");
+                string endDay = adjustedToDate.ToString("yyyy-MM-dd HH:mm:ss");
+                Console.WriteLine("startDay: " + startDay);
+                Console.WriteLine("endDay: " + endDay);
+                string apiUrl = $"{_apiConnect.Url}/bill?branch_id={branchId}";
                 apiUrl += $"&start_day={startDay}&end_day={endDay}";
+
+                if (billId.HasValue)
+                {
+                    apiUrl += $"&bill_id={billId.Value}";
+                }
+
                 Console.WriteLine("apiUrl: " + apiUrl);
+
                 using (var httpClient = new HttpClient())
                 {
                     var response = await httpClient.GetAsync(apiUrl);
                     response.EnsureSuccessStatusCode();
 
                     var responseBody = await response.Content.ReadAsStringAsync();
-                    var responseData =
-                        JsonConvert.DeserializeObject<BranchApiResponse<List<BillFromList>>>(responseBody);
-                    // var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
-                    // Console.WriteLine("responseconvert");
-                    // Console.WriteLine(responseconvert);
+                    var responseData = JsonConvert.DeserializeObject<BillListRespon>(responseBody);
+                    var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
+                    Console.WriteLine("responseconvert");
+                    Console.WriteLine(responseconvert);
+
                     if (responseData != null && responseData.status == 200)
                     {
                         Bill.Clear();
-                        foreach (var bill in responseData.data)
+                        TotalMoney.Text = responseData.data.total_price + " $";
+                        TotalCredit.Text = responseData.data.total_credit + " $";
+                        TotalCash.Text = responseData.data.total_cash + " $";
+
+                        foreach (var bill in responseData.data.list)
                         {
-                            Bill.Add(bill);
+                            Bill.Add(new BillFromList
+                            {
+                                bill_id = bill.bill_id,
+                                customer_name = bill.customer_name,
+                                customer_phone = bill.customer_phone,
+                                branch_id = bill.branch_id,
+                                pay_method = bill.pay_method,
+                                user_id = bill.user_id,
+                                total_price = bill.total_price,
+                                discount = bill.discount,
+                                status = bill.status,
+                            });
                         }
 
                         FilteredBill.Refresh();
@@ -484,7 +533,7 @@ namespace NailManager.Screen
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error fetching bills: {ex.Message}");
+                Console.WriteLine($"Error fetching bills: {ex.Message}");
             }
             finally
             {
@@ -492,6 +541,39 @@ namespace NailManager.Screen
             }
         }
 
+
+        private void BillIdTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                // Gọi phương thức xử lý nút Search khi nhấn phím Enter
+                SearchButton_Click(sender, e);
+            }
+        }
+
+        private async void SearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Lấy giá trị bill ID từ TextBox
+            int.TryParse(BillIdSearch.Text, out int billId);
+
+            // Nếu nhập ID bill hợp lệ, gọi GetBills với billId
+            if (billId > 0)
+            {
+                await GetBills(billId: billId);
+            }
+            else
+            {
+                MessageBox.Show("Please enter a valid Bill ID.", "Invalid Input", MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+
+        private async void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            BillIdTextBox.Text = "";
+            // Gọi GetBills mà không truyền ID bill để lấy toàn bộ danh sách
+            await GetBills();
+        }
 
         private DrawingGroup RenderSvg(string svgFile)
         {
@@ -735,6 +817,17 @@ namespace NailManager.Screen
                     Console.WriteLine("user.BranchId in create: " + user.BranchId);
                     BranchId = user.BranchId > 0 ? user.BranchId : 1; // Đặt BranchId là 1 nếu admin
                     // Cập nhật lại FilterBranch.Visibility sau khi thiết lập giá trị của ComboBox
+                    permision = user.Permission;
+                    if (permision == "1")
+                    {
+                        ProductBorder.Visibility = Visibility.Collapsed;
+                        BillListScroll.Height = 520;
+                    }
+                    else
+                    {
+                        ProductBorder.Visibility = Visibility.Visible;
+                    }
+
                     Dispatcher.Invoke(() =>
                     {
                         BranchComboBox.SelectedValue = BranchId;
