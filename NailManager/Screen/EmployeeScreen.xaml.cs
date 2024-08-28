@@ -1,10 +1,14 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Http;
+using System.Printing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Xps;
 using NailManager.Models;
 using NailManager.Services;
 using Newtonsoft.Json;
@@ -66,6 +70,10 @@ namespace NailManager.Screen
 
         private async void OnUserItemClicked(object sender, MouseButtonEventArgs e)
         {
+            // Tạo các biến để lưu trữ username và password
+            string username = null;
+            string password = null;
+
             // Nếu không phải admin thì hiển thị modal xác thực
             if (permision != "1")
             {
@@ -73,10 +81,16 @@ namespace NailManager.Screen
                 bool? dialogResult = authWindow.ShowDialog();
 
                 // Nếu xác thực không thành công, thoát khỏi hàm
-                if (dialogResult != true)
+                if (dialogResult != true || !authWindow.IsAuthenticated)
                 {
                     return;
                 }
+
+                // Lấy username và password từ cửa sổ xác thực
+                username = authWindow.EnteredUsername;
+                password = authWindow.EnteredPassword;
+                Console.WriteLine("Username: " + username);
+                Console.WriteLine("Password: " + password);
             }
 
             ShowLoading(true);
@@ -115,7 +129,6 @@ namespace NailManager.Screen
 
                 // Thiết lập thời gian bắt đầu và kết thúc cho ngày hiện tại
                 TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
-                // DateTime today = DateTime.Now.Date;
                 DateTime fromDate = DateTime.Today;
                 DateTime toDate = DateTime.Today;
                 DateTime adjustedFromDate = fromDate.Add(-offset);
@@ -124,49 +137,92 @@ namespace NailManager.Screen
                 // Chuyển đổi fromDate và toDate thành chuỗi theo định dạng yêu cầu
                 string startDay = adjustedFromDate.ToString("yyyy-MM-dd HH:mm:ss");
                 string endDay = adjustedToDate.ToString("yyyy-MM-dd HH:mm:ss");
-                // string startDay = today.ToString("yyyy-MM-dd 00:00:00");
-                // string endDay = today.ToString("yyyy-MM-dd 23:59:59");
 
                 // Lấy user_id và branch_id
                 int userId = selectedUser.user_id;
                 int branchId = selectedUser.branch_id; // Giả sử branch_id có trong selectedUser
 
+                // Xây dựng các tham số dưới dạng Dictionary<string, string>
+                var parameters = new Dictionary<string, string>
+                {
+                    { "branch_id", branchId.ToString() },
+                    { "user_id", userId.ToString() },
+                    { "start_day", startDay },
+                    { "end_day", endDay },
+                    { "status", "1" }
+                };
+
+                // Thêm username và password vào parameters nếu có
+                if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+                {
+                    parameters.Add("password", password);
+                }
+
+                // Console log các tham số
+                foreach (var param in parameters)
+                {
+                    Console.WriteLine($"{param.Key}: {param.Value}");
+                }
+
                 // Tạo URL API
-                string apiUrl =
-                    $"{_apiConnect.Url}/bill?branch_id={branchId}&user_id={userId}&start_day={startDay}&end_day={endDay}&status=1";
+                string apiUrl = "/bill/get"; // Đường dẫn tương đối cho API
+                var apiService = new Api();
 
                 try
                 {
-                    using (var httpClient = new HttpClient())
+                    // Gọi PostApiAsync để gửi yêu cầu
+                    await apiService.PostApiAsync(apiUrl, parameters, (responseBody) =>
                     {
-                        var response = await httpClient.GetAsync(apiUrl);
-                        response.EnsureSuccessStatusCode();
-
-                        var responseBody = await response.Content.ReadAsStringAsync();
-                        var responseData = JsonConvert.DeserializeObject<BranchApiResponse<List<Bill>>>(responseBody);
-
-                        if (responseData != null && responseData.status == 200)
+                        string formattedJson = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
+                        Console.WriteLine(formattedJson);
+                        try
                         {
-                            // Cập nhật danh sách FilteredBills với dữ liệu mới từ API
-                            FilteredBills.Clear();
-                            foreach (var bill in responseData.data)
+                            var responseData =
+                                JsonConvert.DeserializeObject<BranchApiResponse<BillListResponse>>(responseBody);
+
+                            // Console JSON đẹp và dễ đọc
+                            Console.WriteLine("Response from API:");
+
+                            if (responseData != null && responseData.status == 200)
                             {
-                                FilteredBills.Add(bill);
-                            }
+                                // Cập nhật danh sách FilteredBills với dữ liệu mới từ API
+                                FilteredBills.Clear();
+                                foreach (var bill in responseData.data.list)
+                                {
+                                    FilteredBills.Add(bill);
+                                }
 
-                            ShowLoading(false);
+                                // Cập nhật các trường khác nếu cần
+                                TotalPriceText.Text = "Total Price: " + responseData.data.total_price;
+                                TotalCashText.Text = "Total Cash: " + responseData.data.total_cash;
+                                TotalCreditText.Text = "Total Credit: " + responseData.data.total_credit;
+                                TotalProfitText.Text = "Total Profit: " + responseData.data.total_profit;
+                                TotalBillText.Text = "Total Bill: " + responseData.data.total_bill;
+                            }
+                            else
+                            {
+                                Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
+                                MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}", "API Error",
+                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            ShowLoading(false);
-                            Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
+                            Console.WriteLine($"Error parsing response: {ex.Message}");
+                            MessageBox.Show($"Error parsing response: {ex.Message}", "Error", MessageBoxButton.OK,
+                                MessageBoxImage.Error);
                         }
-                    }
+                    });
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"Error calling API: {ex.Message}");
+                    MessageBox.Show($"Error calling API: {ex.Message}", "Error", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+                finally
+                {
                     ShowLoading(false);
-                    MessageBox.Show($"Error calling API: {ex.Message}");
                 }
             }
         }
@@ -186,13 +242,11 @@ namespace NailManager.Screen
                     if (permision == "1")
                     {
                         SaveButton.Visibility = Visibility.Visible;
-                        CancelButton.Visibility = Visibility.Visible;
                         PasswordPanel.Visibility = Visibility.Visible;
                     }
                     else
                     {
                         SaveButton.Visibility = Visibility.Collapsed;
-                        CancelButton.Visibility = Visibility.Collapsed;
                         PasswordPanel.Visibility = Visibility.Collapsed;
                     }
 
@@ -447,50 +501,65 @@ namespace NailManager.Screen
                 int userId = _selectedUser?.user_id ?? 0;
                 int branchId = _selectedUser?.branch_id ?? 0;
 
-                // Tạo URL API
-                string apiUrl = $"{_apiConnect.Url}/bill?branch_id={branchId}&user_id={userId}";
+                // Xây dựng các tham số dưới dạng Dictionary<string, string>
+                var parameters = new Dictionary<string, string>
+                {
+                    { "branch_id", branchId.ToString() },
+                    { "user_id", userId.ToString() },
+                    { "status", "1" } // Giả định status là 1
+                };
 
                 // Thêm các tham số nếu có giá trị
                 if (!string.IsNullOrEmpty(startDay))
                 {
-                    apiUrl += $"&start_day={startDay}";
+                    parameters.Add("start_day", startDay);
                 }
 
                 if (!string.IsNullOrEmpty(endDay))
                 {
-                    apiUrl += $"&end_day={endDay}";
+                    parameters.Add("end_day", endDay);
                 }
 
-                apiUrl += "&status=1"; // Giả định status là 1
-
+                // Tạo URL API
+                string apiUrl = "/bill/get"; // Đường dẫn tương đối cho API
+                var apiService = new Api();
                 try
                 {
-                    using (var httpClient = new HttpClient())
+                    // Gọi GetApiAsync để gửi yêu cầu
+                    await apiService.GetApiAsync(apiUrl, parameters, (responseBody) =>
                     {
-                        var response = await httpClient.GetAsync(apiUrl);
-                        response.EnsureSuccessStatusCode();
-
-                        var responseBody = await response.Content.ReadAsStringAsync();
-                        var responseData = JsonConvert.DeserializeObject<BranchApiResponse<List<Bill>>>(responseBody);
-
-                        if (responseData != null && responseData.status == 200)
+                        try
                         {
-                            // Cập nhật danh sách FilteredBills với dữ liệu mới từ API
-                            FilteredBills.Clear();
-                            foreach (var bill in responseData.data)
+                            var responseData =
+                                JsonConvert.DeserializeObject<BranchApiResponse<List<Bill>>>(responseBody);
+
+                            if (responseData != null && responseData.status == 200)
                             {
-                                FilteredBills.Add(bill);
+                                // Cập nhật danh sách FilteredBills với dữ liệu mới từ API
+                                FilteredBills.Clear();
+                                foreach (var bill in responseData.data)
+                                {
+                                    FilteredBills.Add(bill);
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
                             }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
+                            Console.WriteLine($"Error parsing response: {ex.Message}");
+                            MessageBox.Show($"Error parsing response: {ex.Message}", "Error", MessageBoxButton.OK,
+                                MessageBoxImage.Error);
                         }
-                    }
+                    });
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error calling API: {ex.Message}");
+                    Console.WriteLine($"Error calling API: {ex.Message}");
+                    MessageBox.Show($"Error calling API: {ex.Message}", "Error", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
                 }
             }
             finally
@@ -498,6 +567,7 @@ namespace NailManager.Screen
                 ShowLoading(false); // Ẩn loading khi hoàn tất
             }
         }
+
 
         private async void OnDeleteButtonClick(object sender, RoutedEventArgs e)
         {
@@ -592,6 +662,106 @@ namespace NailManager.Screen
         private void ShowLoading(bool show)
         {
             Dispatcher.Invoke(() => { LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed; });
+        }
+
+        private FlowDocument CreateBillDocument()
+        {
+            string employeeId = UserIDTextBox.Text;
+            string employee = UserNameTextBox.Text;
+            string rate = RateTextBox.Text;
+
+            FlowDocument document = new FlowDocument
+            {
+                PageWidth = 275,
+                PagePadding = new Thickness(10),
+                ColumnWidth = double.PositiveInfinity
+            };
+
+            // Add Image (SVG)
+
+
+            // Title
+            Paragraph title = new Paragraph(new Run("Bill For Employee"))
+            {
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(title);
+
+            // Bill Info
+            Paragraph billInfo =
+                new Paragraph(new Run(
+                    $"employeeId: {employeeId}\nEmployee: {employee}\nRate: {rate}\nFrom: {DateTime.Now:dd/MM/yyyy}\nTo: {DateTime.Now:dd/MM/yyyy}"))
+                {
+                    FontSize = 12,
+                    TextAlignment = TextAlignment.Left,
+                    FontFamily = new FontFamily("Roboto"),
+                };
+            document.Blocks.Add(billInfo);
+            string totalPrice = TotalPriceText.Text;
+            string total_cash = TotalCashText.Text;
+            string total_credit = TotalCreditText.Text;
+            string total_profit = TotalProfitText.Text;
+            string total_bill = TotalBillText.Text;
+
+
+            // Total
+            Paragraph totalParagraph =
+                new Paragraph(new Run(
+                    $"\n{totalPrice} $\n{total_cash} $\n{total_credit} $\n{total_profit} $\n{total_bill} $"))
+                {
+                    FontSize = 14,
+                    FontWeight = FontWeights.Bold,
+                    TextAlignment = TextAlignment.Left,
+                    FontFamily = new FontFamily("Roboto"),
+                };
+            document.Blocks.Add(totalParagraph);
+
+
+            return document;
+        }
+
+
+        private void PreviewBill(FlowDocument document)
+        {
+            Window previewWindow = new Window
+            {
+                Title = "Bill Preview",
+                Width = 300,
+                Height = 400,
+                Content = new FlowDocumentScrollViewer
+                {
+                    Document = document,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+                }
+            };
+            previewWindow.ShowDialog();
+        }
+
+
+        private void PrintBill(FlowDocument document)
+        {
+            PrintDialog printDialog = new PrintDialog();
+
+            // Lấy máy in mặc định và in tài liệu mà không cần hiển thị hộp thoại in
+            var printQueue = printDialog.PrintQueue;
+            XpsDocumentWriter writer = PrintQueue.CreateXpsDocumentWriter(printQueue);
+            writer.Write(((IDocumentPaginatorSource)document).DocumentPaginator);
+        }
+
+        private void PrintBillButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Create a FlowDocument for the bill
+            FlowDocument billDocument = CreateBillDocument();
+
+            // Show a preview of the bill
+            PreviewBill(billDocument);
+
+            // Optionally, you can also print the bill directly after previewing
+            // Uncomment the following line if you want to print immediately after previewing
+            // PrintBill(billDocument);
         }
     }
 }

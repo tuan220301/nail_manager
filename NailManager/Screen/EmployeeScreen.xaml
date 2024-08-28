@@ -350,7 +350,253 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <!--  scroll viewer  -->
+        <SolidColorBrush Color="#888" x:Key="StandardBorderBrush" />
+        <SolidColorBrush Color="Black" x:Key="StandardBackgroundBrush" />
+        <SolidColorBrush Color="#DDD" x:Key="HoverBorderBrush" />
+        <SolidColorBrush Color="Gray" x:Key="SelectedBackgroundBrush" />
+        <SolidColorBrush Color="White" x:Key="SelectedForegroundBrush" />
+        <SolidColorBrush Color="#888" x:Key="DisabledForegroundBrush" />
+        <SolidColorBrush Color="#444" x:Key="GlyphBrush" />
+        <SolidColorBrush Color="#888" x:Key="NormalBrush" />
+        <SolidColorBrush Color="#888" x:Key="NormalBorderBrush" />
+        <SolidColorBrush Color="#FF686868" x:Key="HorizontalNormalBrush" />
+        <SolidColorBrush Color="#888" x:Key="HorizontalNormalBorderBrush" />
 
+        <LinearGradientBrush EndPoint="1,0.001" StartPoint="0,0" x:Key="ListBoxBackgroundBrush">
+            <GradientBrush.GradientStops>
+                <GradientStopCollection>
+                    <GradientStop Color="White" Offset="0.0" />
+                    <GradientStop Color="White" Offset="0.6" />
+                    <GradientStop Color="#DDDDDD" Offset="1.2" />
+                </GradientStopCollection>
+            </GradientBrush.GradientStops>
+        </LinearGradientBrush>
+        <LinearGradientBrush EndPoint="0,1" StartPoint="0,0" x:Key="StandardBrush">
+            <GradientBrush.GradientStops>
+                <GradientStopCollection>
+                    <GradientStop Color="#FFF" Offset="0.0" />
+                    <GradientStop Color="#CCC" Offset="1.0" />
+                </GradientStopCollection>
+            </GradientBrush.GradientStops>
+        </LinearGradientBrush>
+        <LinearGradientBrush EndPoint="0,1" StartPoint="0,0" x:Key="PressedBrush">
+            <GradientBrush.GradientStops>
+                <GradientStopCollection>
+                    <GradientStop Color="#BBB" Offset="0.0" />
+                    <GradientStop Color="#EEE" Offset="0.1" />
+                    <GradientStop Color="#EEE" Offset="0.9" />
+                    <GradientStop Color="#FFF" Offset="1.0" />
+                </GradientStopCollection>
+            </GradientBrush.GradientStops>
+        </LinearGradientBrush>
+
+        <Style TargetType="{x:Type RepeatButton}" x:Key="ScrollBarLineButton">
+            <Setter Property="Visibility" Value="Hidden" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="OverridesDefaultStyle" Value="true" />
+            <Setter Property="Focusable" Value="false" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type RepeatButton}">
+                        <Border
+                            Background="{StaticResource NormalBrush}"
+                            BorderBrush="{StaticResource NormalBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="2"
+                            Margin="1"
+                            Name="Border">
+                            <Path
+                                Data="{Binding Path=Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                Fill="{StaticResource GlyphBrush}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="true">
+                                <Setter Property="Background" TargetName="Border" Value="{StaticResource PressedBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="{x:Type RepeatButton}" x:Key="ScrollBarPageButton">
+            <Setter Property="Visibility" Value="Hidden" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="OverridesDefaultStyle" Value="true" />
+            <Setter Property="IsTabStop" Value="false" />
+            <Setter Property="Focusable" Value="false" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type RepeatButton}">
+                        <Border Background="Black" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type Thumb}" x:Key="ScrollBarThumb">
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="OverridesDefaultStyle" Value="true" />
+            <Setter Property="IsTabStop" Value="false" />
+            <Setter Property="Focusable" Value="false" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="0"
+                            CornerRadius="4"
+                            Margin="8,0,-2,0"
+                            Width="8" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ControlTemplate TargetType="{x:Type ScrollBar}" x:Key="VerticalScrollBar">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition MaxHeight="0" />
+                    <RowDefinition Height="0.00001*" />
+                    <RowDefinition MaxHeight="0" />
+                </Grid.RowDefinitions>
+                <Border
+                    Background="Transparent"
+                    CornerRadius="2"
+                    Grid.RowSpan="3" />
+                <RepeatButton
+                    Command="ScrollBar.LineUpCommand"
+                    Content="M 0 4 L 8 4 L 4 0 Z"
+                    Grid.Row="0"
+                    Height="18"
+                    Style="{StaticResource ScrollBarLineButton}" />
+                <Track
+                    Grid.Row="1"
+                    IsDirectionReversed="true"
+                    Name="PART_Track">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource ScrollBarPageButton}" />
+                    </Track.DecreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb
+                            Background="{StaticResource HorizontalNormalBrush}"
+                            BorderBrush="{StaticResource HorizontalNormalBorderBrush}"
+                            Margin="1,0,1,0"
+                            Style="{StaticResource ScrollBarThumb}" />
+                    </Track.Thumb>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource ScrollBarPageButton}" />
+                    </Track.IncreaseRepeatButton>
+                </Track>
+                <RepeatButton
+                    Command="ScrollBar.LineDownCommand"
+                    Content="M 0 0 L 4 4 L 8 0 Z"
+                    Grid.Row="3"
+                    Height="18"
+                    Style="{StaticResource ScrollBarLineButton}" />
+            </Grid>
+        </ControlTemplate>
+        <ControlTemplate TargetType="{x:Type ScrollBar}" x:Key="HorizontalScrollBar">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition MaxWidth="18" />
+                    <ColumnDefinition Width="0.00001*" />
+                    <ColumnDefinition MaxWidth="18" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Background="#F0F0F0"
+                    CornerRadius="2"
+                    Grid.ColumnSpan="3" />
+                <RepeatButton
+                    Command="ScrollBar.LineLeftCommand"
+                    Content="M 4 0 L 4 8 L 0 4 Z"
+                    Grid.Column="0"
+                    Style="{StaticResource ScrollBarLineButton}"
+                    Width="18" />
+                <Track
+                    Grid.Column="1"
+                    IsDirectionReversed="False"
+                    Name="PART_Track">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource ScrollBarPageButton}" />
+                    </Track.DecreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb
+                            Background="{StaticResource NormalBrush}"
+                            BorderBrush="{StaticResource NormalBorderBrush}"
+                            Margin="0,1,0,1"
+                            Style="{StaticResource ScrollBarThumb}" />
+                    </Track.Thumb>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource ScrollBarPageButton}" />
+                    </Track.IncreaseRepeatButton>
+                </Track>
+                <RepeatButton
+                    Command="ScrollBar.LineRightCommand"
+                    Content="M 0 0 L 4 4 L 0 8 Z"
+                    Grid.Column="3"
+                    Style="{StaticResource ScrollBarLineButton}"
+                    Width="18" />
+            </Grid>
+        </ControlTemplate>
+        <Style TargetType="{x:Type ScrollBar}" x:Key="{x:Type ScrollBar}">
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="OverridesDefaultStyle" Value="true" />
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width" Value="Auto" />
+                    <Setter Property="Height" Value="18" />
+                    <Setter Property="Template" Value="{StaticResource HorizontalScrollBar}" />
+                </Trigger>
+                <Trigger Property="Orientation" Value="Vertical">
+                    <Setter Property="Width" Value="18" />
+                    <Setter Property="Height" Value="Auto" />
+                    <Setter Property="Template" Value="{StaticResource VerticalScrollBar}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type ScrollViewer}" x:Key="FavsScrollViewer">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <ScrollContentPresenter Grid.Column="1" />
+                            <ScrollBar
+                                Maximum="{TemplateBinding ScrollableHeight}"
+                                Name="PART_VerticalScrollBar"
+                                Value="{TemplateBinding VerticalOffset}"
+                                ViewportSize="{TemplateBinding ViewportHeight}"
+                                Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
+                            <ScrollBar
+                                Grid.Column="1"
+                                Grid.Row="1"
+                                Maximum="{TemplateBinding ScrollableWidth}"
+                                Name="PART_HorizontalScrollBar"
+                                Orientation="Horizontal"
+                                Value="{TemplateBinding HorizontalOffset}"
+                                ViewportSize="{TemplateBinding ViewportWidth}"
+                                Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -447,78 +693,84 @@
                                         </Grid>
                                     </Border>
                                     <!--  Sample Data Rows  -->
-                                    <ItemsControl ItemsSource="{Binding FilteredUsers}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border
-                                                    BorderBrush="#E5E7EB"
-                                                    BorderThickness="0,0,0,1"
-                                                    MouseLeftButtonUp="OnUserItemClicked">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="150" />
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="*" />
-                                                        </Grid.ColumnDefinitions>
+                                    <ScrollViewer
+                                        Height="750"
+                                        Style="{DynamicResource ResourceKey=styleScrollViewer}"
+                                        VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding FilteredUsers}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border
+                                                        BorderBrush="#E5E7EB"
+                                                        BorderThickness="0,0,0,1"
+                                                        MouseLeftButtonUp="OnUserItemClicked">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="150" />
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
 
-                                                        <TextBlock
-                                                            FontSize="18"
-                                                            Grid.Column="0"
-                                                            Margin="5"
-                                                            Text="{Binding user_id}"
-                                                            VerticalAlignment="Center" />
-                                                        <TextBlock
-                                                            FontSize="18"
-                                                            Grid.Column="1"
-                                                            Margin="5"
-                                                            Text="{Binding user_name}"
-                                                            VerticalAlignment="Center" />
-                                                        <Button
-                                                            Background="{StaticResource ErrorBrush}"
-                                                            BorderThickness="0"
-                                                            Click="OnDeleteButtonClick"
-                                                            Grid.Column="2"
-                                                            Height="50"
-                                                            Margin="5"
-                                                            Padding="10"
-                                                            Width="50"
-                                                            x:Name="DeleteButton">
-                                                            <Button.Style>
-                                                                <Style TargetType="Button">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                    <!--  Mặc định ẩn  -->
-                                                                    <Setter Property="Template">
-                                                                        <Setter.Value>
-                                                                            <ControlTemplate TargetType="Button">
-                                                                                <Border
-                                                                                    Background="{TemplateBinding Background}"
-                                                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                                                    CornerRadius="10">
-                                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                                                </Border>
-                                                                            </ControlTemplate>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding DataContext.PermisionDelete, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="1">
-                                                                            <Setter Property="Visibility" Value="Visible" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Button.Style>
-                                                            <faWpf:ImageAwesome
-                                                                Foreground="White"
-                                                                Height="15"
-                                                                Icon="Trash"
-                                                                Width="15" />
-                                                        </Button>
+                                                            <TextBlock
+                                                                FontSize="18"
+                                                                Grid.Column="0"
+                                                                Margin="5"
+                                                                Text="{Binding user_id}"
+                                                                VerticalAlignment="Center" />
+                                                            <TextBlock
+                                                                FontSize="18"
+                                                                Grid.Column="1"
+                                                                Margin="5"
+                                                                Text="{Binding user_name}"
+                                                                VerticalAlignment="Center" />
+                                                            <Button
+                                                                Background="{StaticResource ErrorBrush}"
+                                                                BorderThickness="0"
+                                                                Click="OnDeleteButtonClick"
+                                                                Grid.Column="2"
+                                                                Height="50"
+                                                                Margin="5"
+                                                                Padding="10"
+                                                                Width="50"
+                                                                x:Name="DeleteButton">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <!--  Mặc định ẩn  -->
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate TargetType="Button">
+                                                                                    <Border
+                                                                                        Background="{TemplateBinding Background}"
+                                                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                                                        CornerRadius="10">
+                                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                                    </Border>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding DataContext.PermisionDelete, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="1">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                                <faWpf:ImageAwesome
+                                                                    Foreground="White"
+                                                                    Height="15"
+                                                                    Icon="Trash"
+                                                                    Width="15" />
+                                                            </Button>
 
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+
 
                                     <!--  Add more Border elements here for each row  -->
                                 </StackPanel>
@@ -558,6 +810,7 @@
                                         </Button>
                                         <Button
                                             Background="{StaticResource InfoBrush}"
+                                            Click="PrintBillButton_Click"
                                             FontSize="20"
                                             Foreground="White"
                                             Grid.Column="4"
@@ -694,7 +947,35 @@
                                             Filter
                                         </Button>
                                     </Grid>
-
+                                    <Grid Height="50" Margin="5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="200" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            FontSize="20"
+                                            Grid.Column="0"
+                                            Name="TotalPriceText" />
+                                        <TextBlock
+                                            FontSize="20"
+                                            Grid.Column="1"
+                                            Name="TotalCashText" />
+                                        <TextBlock
+                                            FontSize="20"
+                                            Grid.Column="2"
+                                            Name="TotalCreditText" />
+                                        <TextBlock
+                                            FontSize="20"
+                                            Grid.Column="3"
+                                            Name="TotalProfitText" />
+                                        <TextBlock
+                                            FontSize="20"
+                                            Grid.Column="4"
+                                            Name="TotalBillText" />
+                                    </Grid>
                                     <Border
                                         BorderBrush="#E5E7EB"
                                         BorderThickness="1"

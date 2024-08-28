@@ -69,11 +69,18 @@ namespace NailManager.Models
     {
         public int bill_detail_id { get; set; }
         public int bill_id { get; set; }
-        public int quantity { get; set; }
         public int product_id { get; set; }
-        public string name { get; set; }
+        public string product_name { get; set; }
         public double price { get; set; }
-        public int Quantity { get; set; } // Để ánh xạ với SelectedItems
         public bool IsNewlyAdded { get; set; } = false; // Mặc định là false
+    }
+    public class BillListResponse
+    {
+        public List<Bill> list { get; set; }
+        public double total_price { get; set; }
+        public double total_cash { get; set; }
+        public double total_credit { get; set; }
+        public double total_profit { get; set; }
+        public int total_bill { get; set; }
     }
 }

@@ -27,6 +27,7 @@ public partial class ProductsScreen : UserControl
     // Biến để lưu trữ sản phẩm đang được chỉnh sửa
     private Product _selectedProduct;
     private bool isNewImageSelected = false;
+
     public ProductsScreen()
     {
         InitializeComponent();
@@ -167,83 +168,88 @@ public partial class ProductsScreen : UserControl
     }
 
     private async void OnSubmit(object sender, RoutedEventArgs e)
-{
-    ShowLoading(true); // Hiển thị loading
-    try
     {
-        string name = Name.Text;
-        string amount = Amout.Text;
-        int branchId = (int)BranchComboBox.SelectedValue;
-
-        var client = new HttpClient();
-        HttpRequestMessage request;
-        MultipartFormDataContent content = new MultipartFormDataContent();
-
-        // Kiểm tra nếu đang ở trạng thái chỉnh sửa
-        if (_selectedProduct != null)
+        ShowLoading(true); // Hiển thị loading
+        try
         {
-            // Chỉnh sửa sản phẩm
-            content.Add(new StringContent(name), "product_name");
-            content.Add(new StringContent(_selectedProduct.product_id.ToString()), "product_id");
-            content.Add(new StringContent(amount), "price");
-            content.Add(new StringContent(branchId.ToString()), "branch_id");
+            string name = Name.Text;
+            string amount = Amout.Text;
+            int branchId = (int)BranchComboBox.SelectedValue;
+            var apiService = new Api();
+            MultipartFormDataContent content = new MultipartFormDataContent();
 
-            if (isNewImageSelected) // Chỉ gọi API with-media khi có ảnh mới
+            // Kiểm tra nếu đang ở trạng thái chỉnh sửa
+            if (_selectedProduct != null)
             {
-                Console.WriteLine("update with image");
-                request = new HttpRequestMessage(HttpMethod.Post, $"{_apiConnect.Url}/product/update-with-media");
+                // Chỉnh sửa sản phẩm
+                content.Add(new StringContent(name), "product_name");
+                content.Add(new StringContent(_selectedProduct.product_id.ToString()), "product_id");
+                content.Add(new StringContent(amount), "price");
+                content.Add(new StringContent(branchId.ToString()), "branch_id");
 
-                // Lấy đường dẫn hình ảnh từ nguồn ảnh
-                var imagePath = ((BitmapImage)SelectedImage.Source).UriSource.LocalPath;
-                content.Add(new StreamContent(File.OpenRead(imagePath)), "image", Path.GetFileName(imagePath));
+                if (isNewImageSelected) // Chỉ gọi API with-media khi có ảnh mới
+                {
+                    Console.WriteLine("update with image");
+                    var imagePath = ((BitmapImage)SelectedImage.Source).UriSource.LocalPath;
+                    content.Add(new StreamContent(File.OpenRead(imagePath)), "image", Path.GetFileName(imagePath));
+                    await apiService.PostMultipartApiAsync("/product/update-with-media", content,
+                        (responseBody) => { ProcessApiResponse(responseBody, branchId); });
+                }
+                else
+                {
+                    Console.WriteLine("update without image");
+                    await apiService.PostMultipartApiAsync("/product/update-no-media", content,
+                        (responseBody) => { ProcessApiResponse(responseBody, branchId); });
+                }
             }
             else
             {
-                Console.WriteLine("update without image");
-                request = new HttpRequestMessage(HttpMethod.Post, $"{_apiConnect.Url}/product/update-no-media");
+                // Thêm sản phẩm mới
+                content.Add(new StringContent(name), "product_name");
+                content.Add(new StringContent(amount), "price");
+                content.Add(new StringContent(branchId.ToString()), "branch_id");
+
+                if (SelectedImage.Source != null && SelectedImage.Visibility == Visibility.Visible)
+                {
+                    var imagePath = ((BitmapImage)SelectedImage.Source).UriSource.LocalPath;
+                    content.Add(new StreamContent(File.OpenRead(imagePath)), "image", Path.GetFileName(imagePath));
+                }
+
+                await apiService.PostMultipartApiAsync("/product/create", content,
+                    (responseBody) => { ProcessApiResponse(responseBody, branchId); });
             }
         }
-        else
+        catch (Exception ex)
         {
-            // Thêm sản phẩm mới
-            request = new HttpRequestMessage(HttpMethod.Post, $"{_apiConnect.Url}/product/create-new");
-            content.Add(new StringContent(name), "product_name");
-            content.Add(new StringContent(amount), "price");
-            content.Add(new StringContent(branchId.ToString()), "branch_id");
+            MessageBox.Show($"Error processing API response: {ex.Message}");
+        }
+        finally
+        {
+            ShowLoading(false); // Ẩn loading khi hoàn tất
+        }
+    }
 
-            if (SelectedImage.Source != null && SelectedImage.Visibility == Visibility.Visible)
+    private void ProcessApiResponse(string responseBody, int branchId)
+    {
+        try
+        {
+            var responseData = JsonConvert.DeserializeObject<BranchApiResponse<CreateProductResponse>>(responseBody);
+            if (responseData != null && responseData.status == 200)
             {
-                var imagePath = ((BitmapImage)SelectedImage.Source).UriSource.LocalPath;
-                content.Add(new StreamContent(File.OpenRead(imagePath)), "image", Path.GetFileName(imagePath));
+                GetListProduct(branchId);
+                Cancel_Click(null, null); // Xóa dữ liệu trên các ô nhập
+            }
+            else
+            {
+                MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
             }
         }
-
-        request.Content = content;
-        var response = await client.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-        var responseBody = await response.Content.ReadAsStringAsync();
-
-        // Xử lý phản hồi từ API
-        var responseData = JsonConvert.DeserializeObject<BranchApiResponse<CreateProductResponse>>(responseBody);
-        if (responseData != null && responseData.status == 200)
+        catch (Exception ex)
         {
-            GetListProduct(branchId);
-            Cancel_Click(null, null); // Xóa dữ liệu trên các ô nhập
-        }
-        else
-        {
-            MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
+            MessageBox.Show($"Error processing API response: {ex.Message}");
         }
     }
-    catch (Exception ex)
-    {
-        MessageBox.Show($"Error processing API response: {ex.Message}");
-    }
-    finally
-    {
-        ShowLoading(false); // Ẩn loading khi hoàn tất
-    }
-}
+
 
     private async void ProductItem_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -358,7 +364,7 @@ public partial class ProductsScreen : UserControl
     {
         // Mở hộp thoại chọn file
         OpenFileDialog openFileDialog = new OpenFileDialog();
-        openFileDialog.Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg|All files (*.*)|*.*";
+        openFileDialog.Filter = "Image files (*.jpg)|*.png;*.jpeg;*.jpg|All files (*.*)|*.*";
 
         // Nếu người dùng chọn một file và nhấn OK
         if (openFileDialog.ShowDialog() == true)

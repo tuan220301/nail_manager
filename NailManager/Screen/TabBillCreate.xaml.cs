@@ -244,6 +244,10 @@ public partial class TabBillCreate : UserControl
 
             if (existingItem == null) // Nếu sản phẩm chưa có trong danh sách
             {
+                // Truncate product_name nếu vượt quá 15 ký tự
+                string truncatedName = TruncateString(selectedItem.product_name, 25);
+                selectedItem.product_name = truncatedName;
+
                 selectedItem.Quantity = 1; // Số lượng mặc định là 1
                 SelectedItems.Add(selectedItem); // Thêm sản phẩm vào danh sách
             }
@@ -253,7 +257,11 @@ public partial class TabBillCreate : UserControl
             RefreshSelectedItems();
         }
     }
-
+    private string TruncateString(string value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+        return value.Length <= maxLength ? value : value.Substring(0, maxLength) + "...";
+    }
 
     private void OnRemoveItemClick(object sender, RoutedEventArgs e)
     {
@@ -539,117 +547,121 @@ public partial class TabBillCreate : UserControl
     }
 
     private async void CreateBill_Click(object sender, RoutedEventArgs e)
-{
-    // Kiểm tra đầu vào xem có đầy đủ thông tin chưa
-    if (string.IsNullOrWhiteSpace(CustomerNameTextBox.Text) ||
-        string.IsNullOrWhiteSpace(PhoneNumberTextBox.Text) ||
-        StaffComboBox.SelectedItem == null ||
-        PaymentMethod.SelectedItem == null || // Kiểm tra giá trị của ComboBox PaymentMethod
-        !SelectedItems.Any())
     {
-        MessageBox.Show("Vui lòng điền đầy đủ thông tin và chọn ít nhất một sản phẩm.", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Warning);
-        return; // Dừng quá trình nếu thông tin không đầy đủ
-    }
-
-    ShowLoading(true); // Hiển thị loading
-    try
-    {
-        // Lấy thông tin từ form
-        string customerName = CustomerNameTextBox.Text;
-        string customerPhone = CustomerNameTextBox.Text;
-
-        // Lấy thông tin nhân viên từ ComboBox
-        var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;
-        int userId = selectedUser?.user_id ?? 0;
-        string branchId = BranchComboBox.SelectedValue.ToString();
-
-        // Lấy giá trị phương thức thanh toán từ ComboBox, xử lý nếu null
-        int paymentMethod = PaymentMethod.SelectedItem != null 
-                            ? int.Parse(((ComboBoxItem)PaymentMethod.SelectedItem).Tag.ToString()) 
-                            : 0; // Hoặc giá trị mặc định, cần xử lý theo logic của bạn
-
-        // Kiểm tra lại nếu paymentMethod là 0
-        if (paymentMethod == 0)
+        // Kiểm tra đầu vào xem có đầy đủ thông tin chưa
+        if (string.IsNullOrWhiteSpace(CustomerNameTextBox.Text) ||
+            string.IsNullOrWhiteSpace(PhoneNumberTextBox.Text) ||
+            StaffComboBox.SelectedItem == null ||
+            PaymentMethod.SelectedItem == null || // Kiểm tra giá trị của ComboBox PaymentMethod
+            !SelectedItems.Any())
         {
-            MessageBox.Show("Vui lòng chọn phương thức thanh toán.", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            MessageBox.Show("Vui lòng điền đầy đủ thông tin và chọn ít nhất một sản phẩm.", "Thiếu thông tin",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return; // Dừng quá trình nếu thông tin không đầy đủ
         }
 
-        // Danh sách sản phẩm được chọn
-        var productIds = SelectedItems.Select(item => item.product_id).ToList();
-
-        // Tạo object chứa các tham số theo đúng định dạng JSON yêu cầu
-        var parameters = new
+        ShowLoading(true); // Hiển thị loading
+        try
         {
-            customer_name = customerName,
-            customer_phone = customerPhone,
-            branch_id = branchId,
-            user_id = userId,
-            discount = 0,
-            pay_method = paymentMethod,
-            products = productIds
-        };
+            // Lấy thông tin từ form
+            string customerName = CustomerNameTextBox.Text;
+            string customerPhone = CustomerNameTextBox.Text;
 
-        // Chuyển đổi object parameters thành chuỗi JSON
-        string jsonContent = JsonConvert.SerializeObject(parameters);
+            // Lấy thông tin nhân viên từ ComboBox
+            var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;
+            int userId = selectedUser?.user_id ?? 0;
+            string branchId = BranchComboBox.SelectedValue.ToString();
 
-        // In chuỗi JSON ra để kiểm tra
-        Console.WriteLine("JSON Content:");
-        Console.WriteLine(jsonContent);
+            // Lấy giá trị phương thức thanh toán từ ComboBox, xử lý nếu null
+            int paymentMethod = PaymentMethod.SelectedItem != null
+                ? int.Parse(((ComboBoxItem)PaymentMethod.SelectedItem).Tag.ToString())
+                : 0; // Hoặc giá trị mặc định, cần xử lý theo logic của bạn
 
-        // Đường dẫn API
-        var api = new ApiConnect();
-        string url = api.Url + "/bill/create"; // Thay bằng endpoint thực tế của bạn
-        Console.WriteLine("url: " + url);
-        
-        // Thực hiện gọi API với dữ liệu JSON
-        using (var httpClient = new HttpClient())
+            // Kiểm tra lại nếu paymentMethod là 0
+            if (paymentMethod == 0)
+            {
+                MessageBox.Show("Vui lòng chọn phương thức thanh toán.", "Thiếu thông tin", MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            // Danh sách sản phẩm được chọn
+            var productIds = SelectedItems.Select(item => item.product_id).ToList();
+
+            // Xây dựng các tham số dưới dạng Dictionary<string, string>
+            var parameters = new Dictionary<string, string>
+            {
+                { "customer_name", customerName },
+                { "customer_phone", customerPhone },
+                { "branch_id", branchId },
+                { "user_id", userId.ToString() },
+                { "discount", "0" },
+                { "pay_method", paymentMethod.ToString() }
+            };
+
+            // Thêm các productIds vào parameters với tên động
+            for (int i = 0; i < productIds.Count; i++)
+            {
+                parameters.Add($"products[{i}]", productIds[i].ToString());
+            }
+
+            // In chuỗi JSON ra để kiểm tra
+            Console.WriteLine("Parameters:");
+            foreach (var param in parameters)
+            {
+                Console.WriteLine($"{param.Key}: {param.Value}");
+            }
+
+            // Đường dẫn API
+            var apiService = new Api();
+            string apiUrl = "/bill/create"; // Thay bằng endpoint thực tế của bạn
+
+            // Gọi PostApiAsync để gửi yêu cầu
+            await apiService.PostApiAsync(apiUrl, parameters, (responseBody) =>
+            {
+                try
+                {
+                    var responseData = JsonConvert.DeserializeObject<BranchApiResponse<BillResponseData>>(responseBody);
+
+                    if (responseData != null && responseData.status == 200)
+                    {
+                        Console.WriteLine("Create success");
+                        Console.WriteLine(responseData.data);
+                        // Nếu lưu thành công, thực hiện in hóa đơn
+                        FlowDocument document = CreateBillDocument();
+                        PrintBill(document);
+                        ClearInputs();
+                    }
+                    else
+                    {
+                        Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error parsing response: {ex.Message}");
+                    MessageBox.Show($"Error parsing response: {ex.Message}");
+                }
+            });
+        }
+        catch (Exception ex)
         {
-            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(url, content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<BranchApiResponse<BillResponseData>>(responseBody);
-
-                if (responseData != null && responseData.status == 200)
-                {
-                    Console.WriteLine("Create success");
-                    Console.WriteLine(responseData.data);
-                    // Nếu lưu thành công, thực hiện in hóa đơn
-                    FlowDocument document = CreateBillDocument();
-                    PrintBill(document);
-                    ClearInputs();
-                }
-                else
-                {
-                    Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
-                }
-            }
-            else
-            {
-                Console.WriteLine("Failed to create the bill.");
-            }
+            Console.WriteLine($"Error: {ex.Message}");
+            MessageBox.Show($"Error: {ex.Message}");
+        }
+        finally
+        {
+            ShowLoading(false); // Ẩn loading khi hoàn tất
         }
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error: {ex.Message}");
-    }
-    finally
-    {
-        ShowLoading(false); // Ẩn loading khi hoàn tất
-    }
-}
 
 
     private void PrintBill(FlowDocument document)
     {
         PrintDialog printDialog = new PrintDialog();
-    
+
         // Lấy máy in mặc định và in tài liệu mà không cần hiển thị hộp thoại in
-        var printQueue = printDialog.PrintQueue; 
+        var printQueue = printDialog.PrintQueue;
         XpsDocumentWriter writer = PrintQueue.CreateXpsDocumentWriter(printQueue);
         writer.Write(((IDocumentPaginatorSource)document).DocumentPaginator);
     }
@@ -658,6 +670,7 @@ public partial class TabBillCreate : UserControl
     {
         Dispatcher.Invoke(() => { LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed; });
     }
+
     private void ClearInputs()
     {
         // Xóa dữ liệu trong các TextBox

@@ -20,11 +20,11 @@ namespace NailManager.Screen
             EnteredUsername = UsernameTextBox.Text;
             EnteredPassword = PasswordBox.Password;
 
-            // Giả sử chúng ta có một phương thức để xác thực tên người dùng và mật khẩu
+            // Validate the user
             if (ValidateUser(EnteredUsername, EnteredPassword))
             {
                 IsAuthenticated = true;
-                this.DialogResult = true; // Thiết lập DialogResult để đóng cửa sổ
+                this.DialogResult = true; // Set the dialog result to true to close the window
             }
             else
             {
@@ -55,9 +55,8 @@ namespace NailManager.Screen
 
         private bool ValidateUser(string username, string password)
         {
-            // Thực hiện xác thực người dùng tại đây
-            // Trả về true nếu thông tin xác thực hợp lệ, false nếu không
-            return username == "admin" && password == "admin"; // Thay thế bằng logic xác thực thực tế
+            // Dummy validation logic; replace with actual authentication logic
+            return username != "" && password !=""; // Replace with real validation
         }
     }
 }

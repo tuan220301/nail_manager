@@ -488,7 +488,10 @@
                 </Grid>
                 <Grid>
                     <!--  ScrollViewer chứa danh sách sản phẩm  -->
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer
+                        Height="810"
+                        Style="{DynamicResource ResourceKey=styleScrollViewer}"
+                        VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding FilteredProducts}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -534,10 +537,11 @@
                                                     FontSize="18"
                                                     FontWeight="SemiBold"
                                                     Foreground="#392F5A"
+                                                    Height="60"
                                                     Margin="0,4,0,0"
                                                     Text="{Binding product_name}"
                                                     TextWrapping="Wrap" />
-                                                <StackPanel Height="50" />
+                                                <StackPanel Height="10" />
                                                 <!--  Price and Action  -->
                                                 <StackPanel
                                                     HorizontalAlignment="Stretch"
@@ -546,7 +550,7 @@
                                                     VerticalAlignment="Bottom">
                                                     <!--  Price  -->
                                                     <StackPanel
-                                                        Height="38"
+                                                        Height="90"
                                                         Orientation="Horizontal"
                                                         Width="96">
                                                         <TextBlock

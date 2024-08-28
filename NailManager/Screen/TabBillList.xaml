@@ -938,7 +938,7 @@
                                                                 Margin="0,4,0,0"
                                                                 Text="{Binding product_name}"
                                                                 TextWrapping="Wrap" />
-                                                            <StackPanel Height="50" />
+                                                            <StackPanel Height="10" />
                                                             <StackPanel
                                                                 HorizontalAlignment="Stretch"
                                                                 Margin="0,12,0,0"
@@ -1146,7 +1146,7 @@
                                                         FontWeight="Bold"
                                                         Grid.Column="0"
                                                         Grid.Row="0"
-                                                        Text="{Binding name}"
+                                                        Text="{Binding product_name}"
                                                         VerticalAlignment="Center" />
 
                                                     <TextBlock

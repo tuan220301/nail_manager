@@ -28,4 +28,11 @@
       </Folder>
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="resource\logo.ico" />
+      <Resource Include="Resource\logo.ico">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Resource>
+    </ItemGroup>
+
 </Project>
