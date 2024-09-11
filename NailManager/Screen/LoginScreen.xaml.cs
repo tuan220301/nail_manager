@@ -97,10 +97,12 @@ namespace NailManager.Screen
             string username = UsernameTextBox.Text;
             string password = PasswordBox.Password;
 
-            // Log giá trị username và password
-            Console.WriteLine($"username: {username}");
-            Console.WriteLine($"password: {password}");
-
+            var userExited = await DatabaseHelper.GetUserAsync();
+            if (userExited != null)
+            {
+                Console.WriteLine("user is exited");
+                await DatabaseHelper.DeleteUserAsync(userExited);
+            }
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
                 ErrorMessageTextBlock.Text = "Please fill in both fields.";

@@ -34,17 +34,34 @@ namespace NailManager.Services
                     HttpResponseMessage response = await client.GetAsync(apiUrl);
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();
+
+                    ApiResponse responseConvert = JsonConvert.DeserializeObject<ApiResponse>(responseBody);
+
+                    // Console.WriteLine("Message from API: " + responseConvert.message);  // Truy cập trường message
+                    if (responseConvert.statusCode == 400)
+                    {
+                        ShowAuthErrorAlert();
+                    }
+
                     callback(responseBody);
                 }
                 catch (HttpRequestException e)
                 {
-                    if (e.Message.Contains("401") || e.Message.Contains("403"))
+                    if (e.Message.Contains("401") || e.Message.Contains("403") || e.Message.Contains("400"))
                     {
-                        ShowAuthErrorAlert();
+                        if (e.Message.Contains(400.ToString()))
+                        {
+                            ShowAuthErrorAlert();
+                        }
+                        else
+                        {
+                            throw new ArgumentException(
+                                "Network error. Please check your network connection and try again.", e);
+                        }
                     }
                     else
                     {
-                        callback($"Error: {e.Message}");
+                        Console.WriteLine($"Error call api: {e.Message}");
                     }
                 }
             }
@@ -54,7 +71,6 @@ namespace NailManager.Services
         {
             ApiConnect apiConnect = new ApiConnect();
             string apiUrl = apiConnect.Url + url;
-            Console.WriteLine("apiUrl" + apiUrl);
             using (HttpClient client = new HttpClient())
             {
                 string token = await GetAccessTokenAsync();
@@ -86,13 +102,25 @@ namespace NailManager.Services
 
                     HttpResponseMessage response = await client.PostAsync(apiUrl, content);
 
-                    string responseJSON = JsonConvert.SerializeObject(await response.Content.ReadAsStringAsync(),
-                        Formatting.Indented);
-                    Console.WriteLine("responseJSON");
-                    Console.WriteLine(responseJSON);
+// Đọc nội dung phản hồi từ API
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+// In ra JSON từ API (không cần serialize lại)
+                    Console.WriteLine("Response from API (raw JSON):");
+                    Console.WriteLine(responseBody);
+
+// Đảm bảo không có lỗi khi thực hiện yêu cầu
                     response.EnsureSuccessStatusCode();
 
-                    string responseBody = await response.Content.ReadAsStringAsync();
+// Nếu bạn muốn parse JSON từ API thành đối tượng C#
+                    var responseConvert = JsonConvert.DeserializeObject<ApiResponse>(responseBody);
+                    Console.WriteLine("Message from API: " + responseConvert.message);
+                    if (responseConvert.statusCode == 400)
+                    {
+                        ShowAuthErrorAlert();
+                    }
+
+// Gọi callback với phản hồi ban đầu
                     callback(responseBody);
                 }
                 catch (HttpRequestException e)
@@ -168,11 +196,14 @@ namespace NailManager.Services
             var user = await DatabaseHelper.GetUserAsync();
             if (user != null)
             {
-                await DatabaseHelper.DeleteUserAsync(user);
+                await DatabaseHelper.DeleteUserAsync(user); // Xóa thông tin người dùng khỏi CSDL
             }
 
-            // Trigger the logout event to navigate to the login screen
-            Application.Current.Dispatcher.Invoke(() => { Logout?.Invoke(this, EventArgs.Empty); });
+            // Kích hoạt sự kiện đăng xuất để điều hướng về màn hình login
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Logout?.Invoke(this, EventArgs.Empty); // Sự kiện Logout được kích hoạt
+            });
         }
 
         public event EventHandler? Logout; // Add this event to trigger navigation to the login page

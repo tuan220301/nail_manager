@@ -53,8 +53,17 @@ namespace NailManager.Services
 
         public static async Task DeleteUserAsync(User user)
         {
-            var db = GetConnection();
-            await db.DeleteAsync(user);
+            try
+            {
+                var db = GetConnection();
+                await db.DeleteAsync(user);
+                Console.WriteLine("User deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting user: {ex.Message}");
+            }
         }
+
     }
 }

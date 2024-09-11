@@ -23,7 +23,8 @@ namespace NailManager.Models
         public List<Bill> list { get; set; } // Đổi tên thuộc tính thành 'list' để phù hợp với API response
         public double total_price { get; set; }
         public double total_cash { get; set; }
-        public double total_credit { get; set; }
+        public double total_credit { get; set; } 
+        public double total_bill { get; set; }
     }
 
     public class BillListRespon

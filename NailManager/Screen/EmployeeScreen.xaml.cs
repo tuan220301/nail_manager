@@ -23,6 +23,7 @@ namespace NailManager.Screen
         public string permision = "";
         private string _permisionDelete;
         private ApiConnect _apiConnect = new ApiConnect();
+
         public ObservableCollection<Bill> FilteredBills { get; set; } = new ObservableCollection<Bill>();
 
         public string PermisionDelete
@@ -71,7 +72,7 @@ namespace NailManager.Screen
         private async void OnUserItemClicked(object sender, MouseButtonEventArgs e)
         {
             // Tạo các biến để lưu trữ username và password
-            string username = null;
+            string user_name = null;
             string password = null;
 
             // Nếu không phải admin thì hiển thị modal xác thực
@@ -87,10 +88,10 @@ namespace NailManager.Screen
                 }
 
                 // Lấy username và password từ cửa sổ xác thực
-                username = authWindow.EnteredUsername;
+                user_name = authWindow.EnteredUsername;
                 password = authWindow.EnteredPassword;
-                Console.WriteLine("Username: " + username);
-                Console.WriteLine("Password: " + password);
+                // Console.WriteLine("Username: " + user_name);
+                // Console.WriteLine("Password: " + password);
             }
 
             ShowLoading(true);
@@ -151,9 +152,9 @@ namespace NailManager.Screen
                     { "end_day", endDay },
                     { "status", "1" }
                 };
-
+                Console.WriteLine("param:");
                 // Thêm username và password vào parameters nếu có
-                if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+                if (!string.IsNullOrEmpty(user_name) && !string.IsNullOrEmpty(password))
                 {
                     parameters.Add("password", password);
                 }
@@ -257,6 +258,7 @@ namespace NailManager.Screen
                     {
                         BranchId = user.BranchId;
                         BranchComboBox.Visibility = Visibility.Collapsed;
+                        BorderBranch.Visibility = Visibility.Collapsed;
                     }
                 }
             }
@@ -483,48 +485,54 @@ namespace NailManager.Screen
 
         private async void OnFilterButtonClick(object sender, RoutedEventArgs e)
         {
-            ShowLoading(true);
+            ShowLoading(true); // Hiển thị loading
+
             try
             {
-                // Lấy giá trị từ ComboBox Permission
-                string selectedPermission = (PermissionComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+                // Lấy giá trị từ ComboBox Branch
+                var selectedBranch = BranchComboBox.SelectedItem as Branch;
+                int branchId = selectedBranch?.branch_id ?? 0;
+
+                // Lấy giá trị từ ComboBox User
+                int userId = _selectedUser?.user_id ?? 0;
 
                 // Lấy giá trị từ DatePicker
                 DateTime? fromDate = DatePickerInputFrom.SelectedDate;
                 DateTime? toDate = DatePickerInputTo.SelectedDate;
 
-                // Chuyển đổi ngày thành chuỗi theo định dạng cần thiết
-                string startDay = fromDate.HasValue ? fromDate.Value.ToString("yyyy-MM-dd 00:00:00") : null;
-                string endDay = toDate.HasValue ? toDate.Value.ToString("yyyy-MM-dd 23:59:59") : null;
-
-                // Lấy user_id và branch_id
-                int userId = _selectedUser?.user_id ?? 0;
-                int branchId = _selectedUser?.branch_id ?? 0;
-
-                // Xây dựng các tham số dưới dạng Dictionary<string, string>
-                var parameters = new Dictionary<string, string>
+                // Kiểm tra xem fromDate và toDate có giá trị không
+                if (fromDate.HasValue && toDate.HasValue)
                 {
-                    { "branch_id", branchId.ToString() },
-                    { "user_id", userId.ToString() },
-                    { "status", "1" } // Giả định status là 1
-                };
+                    // Lấy offset của múi giờ cục bộ so với UTC
+                    TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
 
-                // Thêm các tham số nếu có giá trị
-                if (!string.IsNullOrEmpty(startDay))
-                {
-                    parameters.Add("start_day", startDay);
-                }
+                    // Điều chỉnh fromDate và toDate dựa trên offset của múi giờ cục bộ
+                    DateTime adjustedFromDate = fromDate.Value.Add(-offset);
+                    DateTime adjustedToDate = toDate.Value.Add(-offset).AddHours(23).AddMinutes(59).AddSeconds(59);
 
-                if (!string.IsNullOrEmpty(endDay))
-                {
-                    parameters.Add("end_day", endDay);
-                }
+                    // Chuyển đổi fromDate và toDate thành chuỗi theo định dạng yêu cầu
+                    string startDay = adjustedFromDate.ToString("yyyy-MM-dd HH:mm:ss");
+                    string endDay = adjustedToDate.ToString("yyyy-MM-dd HH:mm:ss");
 
-                // Tạo URL API
-                string apiUrl = "/bill/get"; // Đường dẫn tương đối cho API
-                var apiService = new Api();
-                try
-                {
+                    Console.WriteLine("startDay: " + startDay);
+                    Console.WriteLine("endDay: " + endDay);
+                    Console.WriteLine("branchId: " + branchId);
+                    Console.WriteLine("userId: " + userId);
+
+                    // Xây dựng các tham số dưới dạng Dictionary<string, string>
+                    var parameters = new Dictionary<string, string>
+                    {
+                        { "branch_id", branchId.ToString() },
+                        { "user_id", userId.ToString() },
+                        { "status", "1" }, // Giả định status là 1
+                        { "start_day", startDay }, // Thêm startDay
+                        { "end_day", endDay } // Thêm endDay
+                    };
+
+                    // Tạo URL API
+                    string apiUrl = "/bill/get"; // Đường dẫn tương đối cho API
+                    var apiService = new Api();
+
                     // Gọi GetApiAsync để gửi yêu cầu
                     await apiService.GetApiAsync(apiUrl, parameters, (responseBody) =>
                     {
@@ -555,12 +563,16 @@ namespace NailManager.Screen
                         }
                     });
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine($"Error calling API: {ex.Message}");
-                    MessageBox.Show($"Error calling API: {ex.Message}", "Error", MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    MessageBox.Show("Please select valid dates.");
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calling API: {ex.Message}");
+                MessageBox.Show($"Error calling API: {ex.Message}", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
             finally
             {
@@ -757,8 +769,8 @@ namespace NailManager.Screen
             FlowDocument billDocument = CreateBillDocument();
 
             // Show a preview of the bill
-            PreviewBill(billDocument);
-
+            // PreviewBill(billDocument);
+            PrintBill(billDocument);
             // Optionally, you can also print the bill directly after previewing
             // Uncomment the following line if you want to print immediately after previewing
             // PrintBill(billDocument);

@@ -9,7 +9,8 @@ namespace NailManager.Screen
         public ContentScreen()
         {
             InitializeComponent();
-            InitializeDatabase();
+            NavigateToLogin();
+            // InitializeDatabase();
         }
 
         private async void InitializeDatabase()

@@ -54,7 +54,6 @@ public partial class TabBillCreate : UserControl
         var user = await DatabaseHelper.GetUserAsync();
         if (user != null)
         {
-            Console.WriteLine("user.BranchId in create: " + user.BranchId);
             BranchId = user.BranchId > 0 ? user.BranchId : 1; // Đặt BranchId là 1 nếu admin
             FilterBranch.Visibility = user.BranchId > 0 ? Visibility.Collapsed : Visibility.Visible;
 
@@ -176,6 +175,7 @@ public partial class TabBillCreate : UserControl
         ShowLoading(true);
 
         string url = $"/product/list?branch_id={branchId}";
+        // Console.WriteLine("url: " + url);
         Dictionary<string, string> parameters = new Dictionary<string, string>();
         var apiService = new Api();
 
@@ -189,16 +189,22 @@ public partial class TabBillCreate : UserControl
                 }
 
                 var responseData = JsonConvert.DeserializeObject<BranchApiResponse<List<Product>>>(responseBody);
-
+                string responseDataJson = JsonConvert.SerializeObject(responseData, Formatting.Indented);
+                // Console.WriteLine("responseData (JSON): ");
+                Console.WriteLine(responseDataJson);
                 if (responseData == null)
                 {
                     throw new Exception("Failed to parse API response.");
                 }
 
-                if (responseData.status != 200 || responseData.data == null)
+                if (responseData.status != 200 )
                 {
+                    // Console.WriteLine("responseData.status: " + responseData.status);
+                    // Console.WriteLine("data error ");
+                    Console.WriteLine(responseData.data);
                     throw new Exception("Failed to load products.");
                 }
+                
 
                 Dispatcher.Invoke(() =>
                 {
@@ -337,6 +343,8 @@ public partial class TabBillCreate : UserControl
         var selectedItems = SelectedItemsControl.ItemsSource as ObservableCollection<Product>;
         string totalPriceText = TotalPrice.Text.Replace("$", "").Trim();
         double totalPrice = string.IsNullOrWhiteSpace(totalPriceText) ? 0 : double.Parse(totalPriceText);
+        var selectedPaymentMethod = PaymentMethod.SelectedItem as ComboBoxItem;
+        string paymentMethod = selectedPaymentMethod != null ? selectedPaymentMethod.Content.ToString() : "Unknown";
 
         FlowDocument document = new FlowDocument
         {
@@ -375,7 +383,7 @@ public partial class TabBillCreate : UserControl
         // Bill Info
         Paragraph billInfo =
             new Paragraph(new Run(
-                $"InvoiceID: #12345\nStaff: {staff}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
+                $"InvoiceID: #12345\nStaff: {staff}\nPayment method: {paymentMethod}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
             {
                 FontSize = 12,
                 TextAlignment = TextAlignment.Left,
@@ -384,7 +392,7 @@ public partial class TabBillCreate : UserControl
         document.Blocks.Add(billInfo);
 
         // Table Header
-        document.Blocks.Add(CreateHeaderRow(new[] { "NO", "Name", "Price", "Total" }));
+        document.Blocks.Add(CreateHeaderRow(new[] { "NO", "Name", "Price" }));
 
         // Table Rows
         int index = 1;
@@ -393,14 +401,12 @@ public partial class TabBillCreate : UserControl
             double price = (double)item.price;
             double total = price * item.Quantity;
             string formattedPrice = price % 1 == 0 ? price.ToString("N0") : price.ToString("N2");
-            string formattedTotal = total % 1 == 0 ? total.ToString("N0") : total.ToString("N2");
 
             document.Blocks.Add(CreateLineRow(new[]
             {
                 index.ToString(),
                 item.product_name,
                 formattedPrice,
-                formattedTotal
             }));
             index++;
         }
@@ -442,9 +448,8 @@ public partial class TabBillCreate : UserControl
         Grid grid = new Grid();
 
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(25) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(35) });
 
         for (int i = 0; i < columns.Length; i++)
         {
@@ -493,9 +498,8 @@ public partial class TabBillCreate : UserControl
         Grid grid = new Grid();
 
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(25) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(35) });
 
         for (int i = 0; i < columns.Length; i++)
         {
@@ -565,7 +569,7 @@ public partial class TabBillCreate : UserControl
         {
             // Lấy thông tin từ form
             string customerName = CustomerNameTextBox.Text;
-            string customerPhone = CustomerNameTextBox.Text;
+            string customerPhone = PhoneNumberTextBox.Text;
 
             // Lấy thông tin nhân viên từ ComboBox
             var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;

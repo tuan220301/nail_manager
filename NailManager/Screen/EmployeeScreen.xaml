@@ -629,7 +629,8 @@
                 CornerRadius="20"
                 Grid.Column="2"
                 Height="45px"
-                Margin="10,0,0,0">
+                Margin="10,0,0,0"
+                x:Name="BorderBranch">
                 <ComboBox
                     DisplayMemberPath="name"
                     FontSize="18"
@@ -1081,7 +1082,7 @@
                                                                         TextAlignment="Center"
                                                                         VerticalAlignment="Center">
                                                                         <TextBlock.Text>
-                                                                            <Binding Path="updated_at" StringFormat="{}{0} $" />
+                                                                            <Binding Path="updated_at" />
                                                                         </TextBlock.Text>
                                                                     </TextBlock>
                                                                     <TextBlock

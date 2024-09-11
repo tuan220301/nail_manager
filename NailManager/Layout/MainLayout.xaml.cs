@@ -199,9 +199,6 @@ namespace NailManager.Layout
                 case "Process":
                     page = new TabBillList();
                     break;
-                case "Home":
-                    page = new HomeScreen();
-                    break;
                 case "Products":
                     page = new ProductsScreen();
                     break;
@@ -261,12 +258,15 @@ namespace NailManager.Layout
 
         private async void LogoutBtn(object sender, RoutedEventArgs e)
         {
+            ShowLoading(true);
             var user = await DatabaseHelper.GetUserAsync();
             if (user != null)
             {
+                Console.WriteLine("user is exited");
                 await DatabaseHelper.DeleteUserAsync(user);
             }
             Logout?.Invoke(this, EventArgs.Empty);
+            ShowLoading(false);
         }
     }
 }

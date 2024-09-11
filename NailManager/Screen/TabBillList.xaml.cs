@@ -11,10 +11,12 @@ using SharpVectors.Renderers.Wpf;
 using SharpVectors.Dom.Svg;
 using System.Linq;
 using System.Net.Http;
+using System.Printing;
 using System.Text;
 using System.Windows.Media.Imaging;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Xps;
 using SharpVectors.Renderers.Utils;
 using Menu = NailManager.Models.Menu;
 
@@ -336,125 +338,131 @@ namespace NailManager.Screen
         }
 
         private async void UpdateBill_Click(object sender, RoutedEventArgs e)
-{
-    Button clickedButton = sender as Button;
-
-    // Nếu nút "Cancel" được nhấn, hiển thị cảnh báo
-    if (clickedButton != null && clickedButton.Content.ToString() == "Cancel")
-    {
-        MessageBoxResult result = MessageBox.Show(
-            "Canceling this bill will make it uneditable. Are you sure you want to cancel?",
-            "Confirmation",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-
-        // Nếu người dùng chọn "No", dừng quá trình
-        if (result == MessageBoxResult.No)
         {
-            return;
-        }
-    }
+            Button clickedButton = sender as Button;
 
-    ShowLoading(true); // Hiển thị loading
+            // Nếu nút "Cancel" được nhấn, hiển thị cảnh báo
+            if (clickedButton != null && clickedButton.Content.ToString() == "Cancel")
+            {
+                MessageBoxResult result = MessageBox.Show(
+                    "Canceling this bill will make it uneditable. Are you sure you want to cancel?",
+                    "Confirmation",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
 
-    try
-    {
-        // Lấy thông tin từ form
-        string customerName = CustomerNameTextBox.Text;
-        string customerPhone = CustomerNameTextBox.Text;
+                // Nếu người dùng chọn "No", dừng quá trình
+                if (result == MessageBoxResult.No)
+                {
+                    return;
+                }
+            }
 
-        // Lấy thông tin nhân viên từ TextBox
-        int userId = int.Parse(UserIdTextBox.Text);
-        string branchId = BranchComboBox.SelectedValue.ToString();
+            ShowLoading(true); // Hiển thị loading
 
-        // Lấy thông tin giảm giá từ TextBox (giả sử bạn có một TextBox để nhập giảm giá)
-        int discount = 0;
-
-        // Lấy giá trị của Tag từ mục đã chọn trong ComboBox PaymentMethod
-        var selectedPaymentMethod = PaymentMethod.SelectedItem as ComboBoxItem;
-        int paymentMethod = selectedPaymentMethod != null ? int.Parse(selectedPaymentMethod.Tag.ToString()) : 1; // Mặc định là 1 nếu không chọn được
-
-        // Tạo danh sách sản phẩm với product_id
-        var products = SelectedItems.Select(item => item.product_id).ToList();
-
-        // Xây dựng các tham số dưới dạng Dictionary<string, object> để chứa cả giá trị dạng string và list
-        var parameters = new Dictionary<string, object>
-        {
-            { "customer_name", customerName },
-            { "customer_phone", customerPhone },
-            { "branch_id", Int32.Parse(branchId)},
-            { "user_id", userId },
-            { "discount", discount },
-            { "pay_method", paymentMethod }, // Đổi tên từ payment_method sang pay_method để phù hợp với yêu cầu JSON
-            { "products", products } // Gửi trực tiếp mảng sản phẩm
-        };
-
-        // Chuyển đổi parameters sang chuỗi JSON
-        string jsonContent = JsonConvert.SerializeObject(parameters, Formatting.Indented);
-        Console.WriteLine("JSON Content for Update Bill:");
-        Console.WriteLine(jsonContent);
-
-        // Xác định bill_id và status từ nội dung của nút được nhấn
-        int status = 0; // Mặc định là Cancel
-
-        if (clickedButton != null && clickedButton.Content.ToString() == "Print")
-        {
-            status = 2; // Trạng thái "Print"
-        }
-
-        // Thay bằng giá trị thực tế của bill_id từ hệ thống của bạn
-        int billId = int.Parse(BillIdTextBox.Text);
-
-        // Đường dẫn API với bill_id
-        string apiUrl = $"/bill/update?bill_id={billId}";
-        Console.WriteLine("apiUrl: " + apiUrl);
-        var apiService = new Api();
-
-        // Gọi PostApiAsync để gửi yêu cầu
-        await apiService.PostApiAsync(apiUrl, jsonContent, (responseBody) =>
-        {
-            string responseBodyJSON = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
-            Console.WriteLine("responseBody update:");
-            Console.WriteLine(responseBodyJSON);
             try
             {
-                var responseData = JsonConvert.DeserializeObject<BranchApiResponse<BillResponseData>>(responseBody);
+                // Lấy thông tin từ form
+                string customerName = CustomerNameTextBox.Text;
+                string customerPhone = CustomerNameTextBox.Text;
 
-                if (responseData != null && responseData.status == 200)
+                // Lấy thông tin nhân viên từ TextBox
+                int userId = int.Parse(UserIdTextBox.Text);
+                string branchId = BranchComboBox.SelectedValue.ToString();
+
+                // Lấy thông tin giảm giá từ TextBox (giả sử bạn có một TextBox để nhập giảm giá)
+                int discount = 0;
+
+                // Lấy giá trị của Tag từ mục đã chọn trong ComboBox PaymentMethod
+                var selectedPaymentMethod = PaymentMethod.SelectedItem as ComboBoxItem;
+                int paymentMethod =
+                    selectedPaymentMethod != null
+                        ? int.Parse(selectedPaymentMethod.Tag.ToString())
+                        : 1; // Mặc định là 1 nếu không chọn được
+
+                // Tạo danh sách sản phẩm với product_id
+                var products = SelectedItems.Select(item => item.product_id).ToList();
+
+                // Xây dựng các tham số dưới dạng Dictionary<string, object> để chứa cả giá trị dạng string và list
+                var parameters = new Dictionary<string, object>
                 {
-                    GetBills();
-                    if (status == 2)
+                    { "customer_name", customerName },
+                    { "customer_phone", customerPhone },
+                    { "branch_id", Int32.Parse(branchId) },
+                    { "user_id", userId },
+                    { "discount", discount },
                     {
-                        FlowDocument document = CreateBillDocument();
-                        PrintBill(document);
-                        ClearOrderDetails();
-                    }
-                }
-                else
+                        "pay_method", paymentMethod
+                    }, // Đổi tên từ payment_method sang pay_method để phù hợp với yêu cầu JSON
+                    { "products", products } // Gửi trực tiếp mảng sản phẩm
+                };
+
+                // Chuyển đổi parameters sang chuỗi JSON
+                string jsonContent = JsonConvert.SerializeObject(parameters, Formatting.Indented);
+                Console.WriteLine("JSON Content for Update Bill:");
+                Console.WriteLine(jsonContent);
+
+                // Xác định bill_id và status từ nội dung của nút được nhấn
+                int status = 0; // Mặc định là Cancel
+
+                if (clickedButton != null && clickedButton.Content.ToString() == "Print")
                 {
-                    Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
-                    MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}", "API Error",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    status = 2; // Trạng thái "Print"
                 }
+
+                // Thay bằng giá trị thực tế của bill_id từ hệ thống của bạn
+                int billId = int.Parse(BillIdTextBox.Text);
+
+                // Đường dẫn API với bill_id
+                string apiUrl = $"/bill/update?bill_id={billId}";
+                Console.WriteLine("apiUrl: " + apiUrl);
+                var apiService = new Api();
+
+                // Gọi PostApiAsync để gửi yêu cầu
+                await apiService.PostApiAsync(apiUrl, jsonContent, (responseBody) =>
+                {
+                    string responseBodyJSON = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
+                    Console.WriteLine("responseBody update:");
+                    Console.WriteLine(responseBodyJSON);
+                    try
+                    {
+                        var responseData =
+                            JsonConvert.DeserializeObject<BranchApiResponse<BillResponseData>>(responseBody);
+
+                        if (responseData != null && responseData.status == 200)
+                        {
+                            GetBills();
+                            if (status == 2)
+                            {
+                                FlowDocument document = CreateBillDocument();
+                                PrintBill(document);
+                                ClearOrderDetails();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
+                            MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}", "API Error",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error parsing response: {ex.Message}");
+                        MessageBox.Show($"Error parsing response: {ex.Message}", "Error", MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                    }
+                });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error parsing response: {ex.Message}");
-                MessageBox.Show($"Error parsing response: {ex.Message}", "Error", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                Console.WriteLine($"Error: {ex.Message}");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        });
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error: {ex.Message}");
-        MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-    }
-    finally
-    {
-        ShowLoading(false); // Ẩn loading khi hoàn tất
-    }
-}
+            finally
+            {
+                ShowLoading(false); // Ẩn loading khi hoàn tất
+            }
+        }
 
 
         private void TotalPriceChanged()
@@ -526,19 +534,16 @@ namespace NailManager.Screen
                     { "start_day", startDay },
                     { "end_day", endDay }
                 };
-
+                
+                if (billId.HasValue)
+                {
+                    parameters.Add("bill_id", billId.Value.ToString());
+                }
                 // Console.WriteLine("Parameters for API request:");
                 // foreach (var param in parameters)
                 // {
                 //     Console.WriteLine($"{param.Key}: {param.Value}");
                 // }
-
-
-                if (billId.HasValue)
-                {
-                    parameters.Add("billId", billId.Value.ToString());
-                }
-
                 var apiService = new Api();
 
                 // Gọi PostApiAsync để gửi yêu cầu
@@ -547,9 +552,9 @@ namespace NailManager.Screen
                     try
                     {
                         var responseData = JsonConvert.DeserializeObject<BillListRespon>(responseBody);
-                        // var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
+                        var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
                         // Console.WriteLine("responseconvert");
-                        // Console.WriteLine(responseconvert);
+                        Console.WriteLine(responseconvert);
 
                         if (responseData != null && responseData.status == 200)
                         {
@@ -557,9 +562,10 @@ namespace NailManager.Screen
                             TotalMoney.Text = responseData.data.total_price + " $";
                             TotalCredit.Text = responseData.data.total_credit + " $";
                             TotalCash.Text = responseData.data.total_cash + " $";
-
+                            TotalBill.Text = responseData.data.total_bill.ToString();
                             foreach (var bill in responseData.data.list)
                             {
+                                Console.WriteLine("bill.customer_phone: " + bill.customer_phone);
                                 Bill.Add(new BillFromList
                                 {
                                     bill_id = bill.bill_id,
@@ -765,7 +771,7 @@ namespace NailManager.Screen
             Grid grid = new Grid();
 
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(25) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
 
             for (int i = 0; i < columns.Length; i++)
@@ -815,7 +821,7 @@ namespace NailManager.Screen
             Grid grid = new Grid();
 
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(25) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
 
             for (int i = 0; i < columns.Length; i++)
@@ -854,11 +860,14 @@ namespace NailManager.Screen
         private void PrintBill(FlowDocument document)
         {
             PrintDialog printDialog = new PrintDialog();
-            if (printDialog.ShowDialog() == true)
-            {
-                IDocumentPaginatorSource idpSource = document;
-                printDialog.PrintDocument(idpSource.DocumentPaginator, "Bill Print");
-            }
+            // if (printDialog.ShowDialog() == true)
+            // {
+            //     IDocumentPaginatorSource idpSource = document;
+            //     printDialog.PrintDocument(idpSource.DocumentPaginator, "Bill Print");
+            // }
+            var printQueue = printDialog.PrintQueue;
+            XpsDocumentWriter writer = PrintQueue.CreateXpsDocumentWriter(printQueue);
+            writer.Write(((IDocumentPaginatorSource)document).DocumentPaginator);
         }
 
         private async void GetUser()
