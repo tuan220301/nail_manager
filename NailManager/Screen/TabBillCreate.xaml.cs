@@ -127,7 +127,7 @@ public partial class TabBillCreate : UserControl
 
                 var responseData =
                     JsonConvert.DeserializeObject<BranchApiResponse<List<UserFromListApi>>>(responseBody);
-
+                
                 if (responseData == null || responseData.data == null)
                 {
                     throw new Exception("Failed to parse API response.");
@@ -189,9 +189,9 @@ public partial class TabBillCreate : UserControl
                 }
 
                 var responseData = JsonConvert.DeserializeObject<BranchApiResponse<List<Product>>>(responseBody);
-                string responseDataJson = JsonConvert.SerializeObject(responseData, Formatting.Indented);
-                // Console.WriteLine("responseData (JSON): ");
-                Console.WriteLine(responseDataJson);
+                // string responseDataJson = JsonConvert.SerializeObject(responseData, Formatting.Indented);
+                // Console.WriteLine("responseData (JSON) in get product from tab list: ");
+                // Console.WriteLine(responseDataJson);
                 if (responseData == null)
                 {
                     throw new Exception("Failed to parse API response.");
@@ -261,8 +261,18 @@ public partial class TabBillCreate : UserControl
 
             TotalPriceChanged();
             RefreshSelectedItems();
+            UpdateProductSelectionState();
         }
     }
+    private void UpdateProductSelectionState()
+    {
+        foreach (var product in Products)
+        {
+            // Kiểm tra nếu sản phẩm có trong danh sách SelectedItems
+            product.IsChecked = SelectedItems.Any(item => item.product_id == product.product_id);
+        }
+    }
+
     private string TruncateString(string value, int maxLength)
     {
         if (string.IsNullOrEmpty(value)) return value;
@@ -287,6 +297,7 @@ public partial class TabBillCreate : UserControl
 
             TotalPriceChanged();
             RefreshSelectedItems();
+            UpdateProductSelectionState();
         }
     }
 
@@ -559,7 +570,7 @@ public partial class TabBillCreate : UserControl
             PaymentMethod.SelectedItem == null || // Kiểm tra giá trị của ComboBox PaymentMethod
             !SelectedItems.Any())
         {
-            MessageBox.Show("Vui lòng điền đầy đủ thông tin và chọn ít nhất một sản phẩm.", "Thiếu thông tin",
+            MessageBox.Show("Please fill full information.", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return; // Dừng quá trình nếu thông tin không đầy đủ
         }

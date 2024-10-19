@@ -17,7 +17,7 @@ namespace NailManager.Screen
 
         private void SubmitButton_Click(object sender, RoutedEventArgs e)
         {
-            EnteredUsername = UsernameTextBox.Text;
+            // EnteredUsername = UsernameTextBox.Text;
             EnteredPassword = PasswordBox.Password;
 
             // Validate the user

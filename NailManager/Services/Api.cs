@@ -35,34 +35,34 @@ namespace NailManager.Services
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();
 
-                    ApiResponse responseConvert = JsonConvert.DeserializeObject<ApiResponse>(responseBody);
+                    // ApiResponse responseConvert = JsonConvert.DeserializeObject<ApiResponse>(responseBody);
 
                     // Console.WriteLine("Message from API: " + responseConvert.message);  // Truy cập trường message
-                    if (responseConvert.statusCode == 400)
-                    {
-                        ShowAuthErrorAlert();
-                    }
+                    // if (responseConvert.statusCode == 400)
+                    // {
+                    //     ShowAuthErrorAlert();
+                    // }
 
                     callback(responseBody);
                 }
                 catch (HttpRequestException e)
                 {
-                    if (e.Message.Contains("401") || e.Message.Contains("403") || e.Message.Contains("400"))
-                    {
-                        if (e.Message.Contains(400.ToString()))
-                        {
-                            ShowAuthErrorAlert();
-                        }
-                        else
-                        {
-                            throw new ArgumentException(
-                                "Network error. Please check your network connection and try again.", e);
-                        }
-                    }
-                    else
-                    {
+                    // if (e.Message.Contains("401") || e.Message.Contains("403") || e.Message.Contains("400"))
+                    // {
+                    //     if (e.Message.Contains(400.ToString()))
+                    //     {
+                    //         ShowAuthErrorAlert();
+                    //     }
+                    //     else
+                    //     {
+                    //         throw new ArgumentException(
+                    //             "Network error. Please check your network connection and try again.", e);
+                    //     }
+                    // }
+                    // else
+                    // {
                         Console.WriteLine($"Error call api: {e.Message}");
-                    }
+                    // }
                 }
             }
         }
@@ -106,33 +106,33 @@ namespace NailManager.Services
                     string responseBody = await response.Content.ReadAsStringAsync();
 
 // In ra JSON từ API (không cần serialize lại)
-                    Console.WriteLine("Response from API (raw JSON):");
-                    Console.WriteLine(responseBody);
+                    // Console.WriteLine("Response from API (raw JSON):");
+                    // Console.WriteLine(responseBody);
 
 // Đảm bảo không có lỗi khi thực hiện yêu cầu
                     response.EnsureSuccessStatusCode();
 
 // Nếu bạn muốn parse JSON từ API thành đối tượng C#
-                    var responseConvert = JsonConvert.DeserializeObject<ApiResponse>(responseBody);
-                    Console.WriteLine("Message from API: " + responseConvert.message);
-                    if (responseConvert.statusCode == 400)
-                    {
-                        ShowAuthErrorAlert();
-                    }
+                    // var responseConvert = JsonConvert.DeserializeObject<ApiResponse>(responseBody);
+                    // Console.WriteLine("Message from API: " + responseConvert.message);
+                    // if (responseConvert.statusCode == 400)
+                    // {
+                    //     ShowAuthErrorAlert();
+                    // }
 
 // Gọi callback với phản hồi ban đầu
                     callback(responseBody);
                 }
                 catch (HttpRequestException e)
                 {
-                    if (e.Message.Contains("401") || e.Message.Contains("403"))
-                    {
-                        ShowAuthErrorAlert();
-                    }
-                    else
-                    {
+                    // if (e.Message.Contains("401") || e.Message.Contains("403"))
+                    // {
+                    //     ShowAuthErrorAlert();
+                    // }
+                    // else
+                    // {
                         callback($"Error: {e.Message}");
-                    }
+                    // }
                 }
             }
         }
@@ -159,14 +159,14 @@ namespace NailManager.Services
                 }
                 catch (HttpRequestException e)
                 {
-                    if (e.Message.Contains("401") || e.Message.Contains("403"))
-                    {
-                        ShowAuthErrorAlert();
-                    }
-                    else
-                    {
+                    // if (e.Message.Contains("401") || e.Message.Contains("403"))
+                    // {
+                    //     ShowAuthErrorAlert();
+                    // }
+                    // else
+                    // {
                         callback($"Error: {e.Message}");
-                    }
+                    // }
                 }
             }
         }

@@ -88,7 +88,7 @@ namespace NailManager.Screen
                 }
 
                 // Lấy username và password từ cửa sổ xác thực
-                user_name = authWindow.EnteredUsername;
+                // user_name = authWindow.EnteredUsername;
                 password = authWindow.EnteredPassword;
                 // Console.WriteLine("Username: " + user_name);
                 // Console.WriteLine("Password: " + password);
@@ -150,15 +150,15 @@ namespace NailManager.Screen
                     { "user_id", userId.ToString() },
                     { "start_day", startDay },
                     { "end_day", endDay },
-                    { "status", "1" }
+                    { "status", "2" }
                 };
-                Console.WriteLine("param:");
+                
                 // Thêm username và password vào parameters nếu có
-                if (!string.IsNullOrEmpty(user_name) && !string.IsNullOrEmpty(password))
+                if (!string.IsNullOrEmpty(password))
                 {
                     parameters.Add("password", password);
                 }
-
+                Console.WriteLine("param:");
                 // Console log các tham số
                 foreach (var param in parameters)
                 {

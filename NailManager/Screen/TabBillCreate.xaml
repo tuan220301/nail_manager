@@ -539,6 +539,7 @@
                                                     Foreground="#392F5A"
                                                     Height="60"
                                                     Margin="0,4,0,0"
+                                                    MaxWidth="150"
                                                     Text="{Binding product_name}"
                                                     TextWrapping="Wrap" />
                                                 <StackPanel Height="10" />
@@ -571,11 +572,25 @@
                                                     </StackPanel>
                                                     <!--  Plus Button  -->
                                                     <Button Click="OnAddItemClick" Style="{StaticResource IconButtonStyle}">
-                                                        <faWpf:ImageAwesome
-                                                            Foreground="#FFF8F0"
-                                                            Height="20"
-                                                            Icon="Plus"
-                                                            Width="20" />
+                                                        <Button.Content>
+                                                            <faWpf:ImageAwesome
+                                                                Foreground="#FFF8F0"
+                                                                Height="20"
+                                                                Width="20">
+                                                                <faWpf:ImageAwesome.Style>
+                                                                    <Style TargetType="{x:Type faWpf:ImageAwesome}">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsChecked}" Value="True">
+                                                                                <Setter Property="Icon" Value="Check" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding IsChecked}" Value="False">
+                                                                                <Setter Property="Icon" Value="Plus" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </faWpf:ImageAwesome.Style>
+                                                            </faWpf:ImageAwesome>
+                                                        </Button.Content>
                                                     </Button>
                                                 </StackPanel>
                                             </StackPanel>
