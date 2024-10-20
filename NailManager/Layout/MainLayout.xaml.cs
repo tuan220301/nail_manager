@@ -47,7 +47,7 @@ namespace NailManager.Layout
             var user = await DatabaseHelper.GetUserAsync();
             if (user != null)
             {
-                userName.Text = user.UserName;
+                userName.Text = user.Name;
                 permision = user.Permission;
                 CheckPermissionsAndShowMenu(permision);
                 ShowLoading(false);

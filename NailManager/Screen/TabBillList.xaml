@@ -1230,26 +1230,26 @@
                                     </Button.Visibility>
                                 </Button>
                                 <StackPanel Width="30" />
-                                <Button
-                                    Background="Red"
-                                    BorderThickness="0"
-                                    Click="UpdateBill_Click"
-                                    Content="Cancel Bill"
-                                    FontSize="18"
-                                    Foreground="White"
-                                    Height="50"
-                                    Margin="0,10,0,0"
-                                    Style="{StaticResource ButtonCornerRadius}"
-                                    Width="100">
-                                    <Button.Visibility>
-                                        <Binding Path="IsBillSelected">
-                                            <Binding.Converter>
-                                                <BooleanToVisibilityConverter />
-                                            </Binding.Converter>
-                                        </Binding>
-                                    </Button.Visibility>
-                                </Button>
-                                <StackPanel Width="30" />
+                                <!--  <Button  -->
+                                <!--  Background="Red"  -->
+                                <!--  BorderThickness="0"  -->
+                                <!--  Click="UpdateBill_Click"  -->
+                                <!--  Content="Cancel Bill"  -->
+                                <!--  FontSize="18"  -->
+                                <!--  Foreground="White"  -->
+                                <!--  Height="50"  -->
+                                <!--  Margin="0,10,0,0"  -->
+                                <!--  Style="{StaticResource ButtonCornerRadius}"  -->
+                                <!--  Width="100">  -->
+                                <!--     <Button.Visibility> -->
+                                <!--         <Binding Path="IsBillSelected"> -->
+                                <!--             <Binding.Converter> -->
+                                <!--                 <BooleanToVisibilityConverter /> -->
+                                <!--             </Binding.Converter> -->
+                                <!--         </Binding> -->
+                                <!--     </Button.Visibility> -->
+                                <!-- </Button> -->
+                                <!-- <StackPanel Width="30" /> -->
                             </StackPanel>
 
                         </StackPanel>
