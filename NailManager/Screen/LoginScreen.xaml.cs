@@ -29,6 +29,7 @@ namespace NailManager.Screen
             ApplyColors();
             InitializeSvgRendering();
             DisplaySvg();
+            DatabaseHelper.InitializeDatabaseAsync();
         }
 
         private void ApplyColors()
@@ -93,72 +94,83 @@ namespace NailManager.Screen
 
         private async void Submit(object sender, RoutedEventArgs e)
         {
-            LoginLoadingIcon.Visibility = Visibility.Visible;
-            string username = UsernameTextBox.Text;
-            string password = PasswordBox.Password;
+            try
+            {
+                LoginLoadingIcon.Visibility = Visibility.Visible;
+                string username = UsernameTextBox.Text;
+                string password = PasswordBox.Password;
 
-            var userExited = await DatabaseHelper.GetUserAsync();
-            if (userExited != null)
-            {
-                Console.WriteLine("user is exited");
-                await DatabaseHelper.DeleteUserAsync(userExited);
-            }
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-            {
-                ErrorMessageTextBlock.Text = "Please fill in both fields.";
-                ErrorMessageTextBlock.Visibility = Visibility.Visible;
-                LoginLoadingIcon.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                var user = new { user_name = username, password = password };
-
-                string json = JsonConvert.SerializeObject(user);
-                ApiConnect apiString = new ApiConnect();
-                using (var client = new HttpClient())
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 {
-                    var content = new StringContent(json, Encoding.UTF8, "application/json");
-                    var response = await client.PostAsync($"{apiString.Url}/auth/login", content);
-
-                    // Log response
-                    // Console.WriteLine($"response: {response.ToString()}");
-
-                    if (response.IsSuccessStatusCode)
-                        // if(user.user_name == "user" && password == "user")
+                    ErrorMessageTextBlock.Text = "Please fill in both fields.";
+                    ErrorMessageTextBlock.Visibility = Visibility.Visible;
+                    LoginLoadingIcon.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    var user = new { user_name = username, password = password };
+                    string json = JsonConvert.SerializeObject(user);
+                    ApiConnect apiString = new ApiConnect();
+                    using (var client = new HttpClient())
                     {
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        LoginRespon? responseData = JsonConvert.DeserializeObject<LoginRespon>(responseBody);
+                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+                        var response = await client.PostAsync($"{apiString.Url}/auth/login", content);
 
-                        // Log responseData
-                        // Console.WriteLine($"responseData: {responseData}");
-                        // Console.WriteLine("Status: " + responseData.status);
-                        if (response.StatusCode == (HttpStatusCode)200)
+                        if (response.IsSuccessStatusCode)
                         {
-                            // Console.WriteLine("Message: " + responseData.message);
-                            // Console.WriteLine("Message: " + responseData.data.access_token);
-                            DataRespon data = responseData.data;
-                            // Save user to database if needed
-                            await DatabaseHelper.SaveUserAsync(new User
-                            {
-                                UserName = data.user_name,
-                                AccessToken = data.access_token,
-                                Name = data.user_name,
-                                UserId = Parse(data.user_id),
-                                Permission = data.permision,
-                                BranchId = data.branch_id
-                            });
-                        }
+                            string responseBody = await response.Content.ReadAsStringAsync();
+                            LoginRespon? responseData = JsonConvert.DeserializeObject<LoginRespon>(responseBody);
+                            DataRespon data = responseData?.data;
 
-                        LoginLoadingIcon.Visibility = Visibility.Collapsed;
-                        LoginSuccessful?.Invoke(this, EventArgs.Empty);
-                    }
-                    else
-                    {
-                        ErrorMessageTextBlock.Text = "Invalid username or password.";
-                        ErrorMessageTextBlock.Visibility = Visibility.Visible;
-                        LoginLoadingIcon.Visibility = Visibility.Collapsed;
+                            if (data != null)
+                            {
+                                string dataAsString = JsonConvert.SerializeObject(data, Formatting.Indented);
+                                Console.WriteLine("Response from login");
+                                Console.WriteLine(dataAsString);
+
+                                // Sử dụng try-catch trong việc lưu thông tin người dùng
+                                try
+                                {
+                                    int userId;
+                                    if (int.TryParse(data.user_id, out userId))
+                                    {
+                                        await DatabaseHelper.SaveUserAsync(new User
+                                        {
+                                            UserName = data.user_name,
+                                            AccessToken = data.access_token,
+                                            Name = data.user_name,
+                                            UserId = userId,
+                                            Permission = data.permision,
+                                            BranchId = data.branch_id
+                                        });
+                                        LoginSuccessful?.Invoke(this, EventArgs.Empty);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Invalid user_id format");
+                                    }
+                                }
+                                catch (Exception dbEx)
+                                {
+                                    Console.WriteLine($"Error saving user: {dbEx.Message}");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ErrorMessageTextBlock.Text = "Invalid username or password.";
+                            ErrorMessageTextBlock.Visibility = Visibility.Visible;
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during login: {ex.Message}");
+            }
+            finally
+            {
+                LoginLoadingIcon.Visibility = Visibility.Collapsed;
             }
         }
 
