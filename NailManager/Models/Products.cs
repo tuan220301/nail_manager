@@ -7,7 +7,7 @@ public class Product : INotifyPropertyChanged
     private bool _isChecked;
     public int product_id { get; set; }
     public string product_name { get; set; }
-    public int price { get; set; }
+    public double price { get; set; }
     public int branch_id { get; set; }
     public int Quantity { get; set; }
     public string url_image { get; set; } 

@@ -18,6 +18,7 @@ namespace NailManager.Services
             using (HttpClient client = new HttpClient())
             {
                 string token = await GetAccessTokenAsync();
+                // Console.WriteLine("token: " + token);
                 if (!string.IsNullOrEmpty(token))
                 {
                     client.DefaultRequestHeaders.Authorization =

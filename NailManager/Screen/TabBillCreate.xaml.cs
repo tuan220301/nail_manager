@@ -81,7 +81,7 @@ public partial class TabBillCreate : UserControl
             try
             {
                 var responseData = JsonConvert.DeserializeObject<BranchApiResponse<List<Branch>>>(responseBody);
-
+                // Console.WriteLine("responseData: " + Utls.FormatJsonString(responseBody));
                 if (responseData != null && responseData.status == 200)
                 {
                     Dispatcher.Invoke(() =>
@@ -127,7 +127,8 @@ public partial class TabBillCreate : UserControl
 
                 var responseData =
                     JsonConvert.DeserializeObject<BranchApiResponse<List<UserFromListApi>>>(responseBody);
-                
+                // Console.WriteLine("Parsed response object: " + Utls.FormatJsonString(responseBody));
+
                 if (responseData == null || responseData.data == null)
                 {
                     throw new Exception("Failed to parse API response.");
@@ -197,14 +198,14 @@ public partial class TabBillCreate : UserControl
                     throw new Exception("Failed to parse API response.");
                 }
 
-                if (responseData.status != 200 )
+                if (responseData.status != 200)
                 {
                     // Console.WriteLine("responseData.status: " + responseData.status);
                     // Console.WriteLine("data error ");
                     Console.WriteLine(responseData.data);
                     throw new Exception("Failed to load products.");
                 }
-                
+
 
                 Dispatcher.Invoke(() =>
                 {
@@ -264,6 +265,7 @@ public partial class TabBillCreate : UserControl
             UpdateProductSelectionState();
         }
     }
+
     private void UpdateProductSelectionState()
     {
         foreach (var product in Products)
@@ -600,6 +602,10 @@ public partial class TabBillCreate : UserControl
                 return;
             }
 
+            // Lấy giá trị từ OrderServiceTextBox, nếu rỗng thì mặc định là 0
+            string otherPriceText = OrderServiceTextBox.Text;
+            double otherPrice = string.IsNullOrWhiteSpace(otherPriceText) ? 0 : double.Parse(otherPriceText);
+
             // Danh sách sản phẩm được chọn
             var productIds = SelectedItems.Select(item => item.product_id).ToList();
 
@@ -611,13 +617,17 @@ public partial class TabBillCreate : UserControl
                 { "branch_id", branchId },
                 { "user_id", userId.ToString() },
                 { "discount", "0" },
-                { "pay_method", paymentMethod.ToString() }
+                { "pay_method", paymentMethod.ToString() },
+                { "other_price", otherPrice.ToString() } // Thêm other_price
             };
 
             // Thêm các productIds vào parameters với tên động
             for (int i = 0; i < productIds.Count; i++)
             {
-                parameters.Add($"products[{i}]", productIds[i].ToString());
+                if (productIds[i] != 0)
+                {
+                    parameters.Add($"products[{i}]", productIds[i].ToString());
+                }
             }
 
             // In chuỗi JSON ra để kiểm tra
@@ -637,7 +647,7 @@ public partial class TabBillCreate : UserControl
                 try
                 {
                     var responseData = JsonConvert.DeserializeObject<BranchApiResponse<BillResponseData>>(responseBody);
-
+            
                     if (responseData != null && responseData.status == 200)
                     {
                         Console.WriteLine("Create success");
@@ -698,5 +708,52 @@ public partial class TabBillCreate : UserControl
 
         // Làm mới ItemsControl để cập nhật giao diện
         RefreshSelectedItems();
+    }
+
+    private void OnAddOtherService(object sender, RoutedEventArgs e)
+    {
+        // Lấy giá trị từ TextBox (giá tiền cho dịch vụ)
+        string inputPriceText = OrderServiceTextBox.Text;
+
+        // Kiểm tra xem người dùng có nhập giá hợp lệ không
+        if (double.TryParse(inputPriceText, out double servicePrice))
+        {
+            // Kiểm tra xem sản phẩm "Other service" đã tồn tại trong danh sách SelectedItems hay chưa
+            var existingService = SelectedItems.FirstOrDefault(item => item.product_name == "Other service");
+
+            if (existingService != null)
+            {
+                // Nếu sản phẩm đã tồn tại, cập nhật giá mới nhất
+                existingService.price = servicePrice;
+            }
+            else
+            {
+                // Nếu chưa tồn tại, tạo sản phẩm mới với tên "Other service"
+                var newProduct = new Product
+                {
+                    product_name = "Other service", // Tên sản phẩm
+                    price = servicePrice, // Giá tiền nhập vào
+                    Quantity = 1 // Số lượng mặc định là 1
+                };
+
+                // Thêm sản phẩm mới vào danh sách SelectedItems
+                SelectedItems.Add(newProduct);
+            }
+
+            // Cập nhật tổng tiền sau khi thêm/cập nhật sản phẩm
+            TotalPriceChanged();
+
+            // Làm mới danh sách SelectedItems trên giao diện người dùng
+            RefreshSelectedItems();
+
+            // Cập nhật trạng thái chọn sản phẩm
+            UpdateProductSelectionState();
+        }
+        else
+        {
+            // Nếu giá trị không hợp lệ, thông báo lỗi
+            MessageBox.Show("Please enter a valid price for Other service.", "Invalid Input", MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
     }
 }

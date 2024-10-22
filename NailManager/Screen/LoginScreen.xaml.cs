@@ -25,6 +25,7 @@ namespace NailManager.Screen
 
         public LoginScreen()
         {
+            
             InitializeComponent();
             ApplyColors();
             InitializeSvgRendering();
@@ -131,24 +132,26 @@ namespace NailManager.Screen
                                 // Sử dụng try-catch trong việc lưu thông tin người dùng
                                 try
                                 {
-                                    int userId;
-                                    if (int.TryParse(data.user_id, out userId))
+                                    // Tạo đối tượng người dùng mới từ dữ liệu đăng nhập
+                                    var User = new User
                                     {
-                                        await DatabaseHelper.SaveUserAsync(new User
-                                        {
-                                            UserName = data.user_name,
-                                            AccessToken = data.access_token,
-                                            Name = data.user_name,
-                                            UserId = userId,
-                                            Permission = data.permision,
-                                            BranchId = data.branch_id
-                                        });
-                                        LoginSuccessful?.Invoke(this, EventArgs.Empty);
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("Invalid user_id format");
-                                    }
+                                        UserName = data.user_name,
+                                        AccessToken = data.access_token,
+                                        Name = data.user_name,
+                                        UserId = data.user_id,  // Sử dụng trực tiếp user_id từ API
+                                        Permission = data.permision,
+                                        BranchId = data.branch_id
+                                    };
+                                    // string UserString = JsonConvert.SerializeObject(User, Formatting.Indented);
+                                    // Console.WriteLine("UserString from login");
+                                    // Console.WriteLine(UserString);
+
+                                    // Lưu người dùng mới
+                                    await DatabaseHelper.SaveUserAsync(User);
+
+                                    // Gọi sự kiện LoginSuccessful
+                                    LoginLoadingIcon.Visibility = Visibility.Collapsed;
+                                    LoginSuccessful?.Invoke(this, EventArgs.Empty);
                                 }
                                 catch (Exception dbEx)
                                 {

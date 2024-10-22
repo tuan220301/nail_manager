@@ -163,12 +163,12 @@ namespace NailManager.Screen
                 var parameters = new Dictionary<string, string>
                     { };
                 string param = JsonConvert.SerializeObject(parameters, Formatting.Indented);
-                Console.WriteLine("parameters");
-                Console.WriteLine(param);
+                // Console.WriteLine("parameters");
+                // Console.WriteLine(param);
                 var apiService = new Api();
                 try
                 {
-                    Console.WriteLine($"{apiUrl}?bill_id={selectedBill.bill_id.ToString()}");
+                    // Console.WriteLine($"{apiUrl}?bill_id={selectedBill.bill_id.ToString()}");
                     // Gọi phương thức GetApiAsync để thực hiện yêu cầu GET
                     await apiService.GetApiAsync($"{apiUrl}?bill_id={selectedBill.bill_id.ToString()}", parameters,
                         (responseBody) =>
@@ -177,7 +177,7 @@ namespace NailManager.Screen
                             {
                                 var responseData =
                                     JsonConvert.DeserializeObject<BranchApiResponse<BillDetail>>(responseBody);
-
+                                // Console.WriteLine("responseData: " + Utls.FormatJsonString(responseBody));
                                 if (responseData != null && responseData.status == 200)
                                 {
                                     var billDetail = responseData.data;
@@ -212,7 +212,8 @@ namespace NailManager.Screen
                                     }
 
                                     RefreshSelectedItems();
-                                    UpdateProductSelectionState(); 
+                                    UpdateProductSelectionState();
+                                    TotalPriceChanged();
                                 }
                                 else
                                 {
@@ -279,6 +280,7 @@ namespace NailManager.Screen
                 UpdateProductSelectionState();
             }
         }
+
         private void UpdateProductSelectionState()
         {
             foreach (var product in Products)
@@ -408,6 +410,7 @@ namespace NailManager.Screen
                 {
                     status = 2; // Trạng thái in bill
                 }
+
                 var parameters = new Dictionary<string, object>
                 {
                     { "customer_name", customerName },
@@ -417,18 +420,17 @@ namespace NailManager.Screen
                     { "discount", discount },
                     { "pay_method", paymentMethod },
                     { "products", products },
-                    {"status" , status}
+                    { "status", status }
                 };
                 string jsonContent = JsonConvert.SerializeObject(parameters, Formatting.Indented);
-                
-                
-                // Gọi API để cập nhật bill
+                Console.WriteLine("JSON param updte: " + Utls.FormatJsonString(jsonContent));
+
                 var apiService = new Api();
                 await apiService.PostApiAsync(apiUrl, jsonContent, (responseBody) =>
                 {
                     string responseBodyJSON = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
                     Console.WriteLine(responseBodyJSON);
-
+                
                     try
                     {
                         var responseData =
@@ -436,7 +438,7 @@ namespace NailManager.Screen
                         if (responseData != null && responseData.status == 200)
                         {
                             GetBills(); // Cập nhật lại danh sách bill
-
+                
                             if (status == 2) // In hóa đơn nếu nhấn "Print"
                             {
                                 FlowDocument document = CreateBillDocument();
@@ -536,7 +538,7 @@ namespace NailManager.Screen
                 var parameters = new Dictionary<string, string>
                 {
                     { "branch_id", branchId.ToString() },
-                    { "start_day", startDay},
+                    { "start_day", startDay },
                     { "end_day", endDay },
                     { "status", "-1" }
                 };

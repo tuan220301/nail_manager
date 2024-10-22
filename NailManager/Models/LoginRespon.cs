@@ -13,7 +13,7 @@ public class DataRespon
     public string name { get; set; }
     public DateTime create_at { get; set; }
     public DateTime update_at { get; set; }
-    public string user_id { get; set; }
+    public int user_id { get; set; }
     public string permision { get; set; }
     public string access_token { get; set; }
     public int branch_id { get; set; }

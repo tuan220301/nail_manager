@@ -10,6 +10,7 @@ namespace NailManager.Services
 
         private static SQLiteAsyncConnection GetConnection()
         {
+            // Console.WriteLine($"Database Path: {dbPath}");
             return new SQLiteAsyncConnection(dbPath);
         }
 
@@ -48,8 +49,14 @@ namespace NailManager.Services
         public static async Task SaveUserAsync(User user)
         {
             var db = GetConnection();
+
+            // Xóa tất cả các người dùng cũ trước khi thêm người dùng mới
+            await db.DeleteAllAsync<User>();
+
+            // Thêm người dùng mới
             await db.InsertAsync(user);
         }
+
 
         public static async Task DeleteUserAsync(User user)
         {

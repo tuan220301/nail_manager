@@ -22,6 +22,7 @@ namespace NailManager.Screen
         private async void CheckLoginStatus()
         {
             var user = await DatabaseHelper.GetUserAsync();
+            Console.WriteLine("user in content screen: " + Utls.FormatJsonString(user.ToString()));
             if (user != null)
             {
                 NavigateToHome();
