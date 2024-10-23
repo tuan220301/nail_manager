@@ -137,7 +137,7 @@ namespace NailManager.Screen
                                     {
                                         UserName = data.user_name,
                                         AccessToken = data.access_token,
-                                        Name = data.user_name,
+                                        Name = data.name,
                                         UserId = data.user_id,  // Sử dụng trực tiếp user_id từ API
                                         Permission = data.permision,
                                         BranchId = data.branch_id

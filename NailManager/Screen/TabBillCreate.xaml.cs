@@ -30,7 +30,8 @@ public partial class TabBillCreate : UserControl
     private WpfSvgWindow _wpfWindow;
     public int BranchId { get; set; }
     private bool _isInitialized = false;
-
+    private Branch currentBranch;
+    private string bill_id_string;
     public TabBillCreate()
     {
         InitializeComponent();
@@ -234,6 +235,8 @@ public partial class TabBillCreate : UserControl
         if (_isInitialized && BranchComboBox.SelectedValue != null)
         {
             int selectedBranchId = (int)BranchComboBox.SelectedValue;
+            currentBranch = BranchComboBox.SelectedItem as Branch;
+
             GetListProduct(selectedBranchId); // Gọi lại với branch_id mới
             GetStaffList(selectedBranchId); // Lấy danh sách nhân viên của chi nhánh đã chọn
         }
@@ -382,7 +385,33 @@ public partial class TabBillCreate : UserControl
             BlockUIContainer imageContainer = new BlockUIContainer(svgImage);
             document.Blocks.Add(imageContainer);
         }
-
+        Paragraph name =
+            new Paragraph(new Run(
+                currentBranch.name))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+        document.Blocks.Add(name);
+        Paragraph desc =
+            new Paragraph(new Run(
+                currentBranch.description))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+        document.Blocks.Add(desc);
+        Paragraph website =
+            new Paragraph(new Run(
+                currentBranch.website))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+        document.Blocks.Add(website);
         // Title
         Paragraph title = new Paragraph(new Run("Bill Invoice (PROCESSING)"))
         {
@@ -396,7 +425,7 @@ public partial class TabBillCreate : UserControl
         // Bill Info
         Paragraph billInfo =
             new Paragraph(new Run(
-                $"InvoiceID: #12345\nStaff: {staff}\nPayment method: {paymentMethod}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
+                $"Bill ID: #{bill_id_string}\nStaff: {staff}\nPayment method: {paymentMethod}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
             {
                 FontSize = 12,
                 TextAlignment = TextAlignment.Left,
@@ -435,16 +464,35 @@ public partial class TabBillCreate : UserControl
         document.Blocks.Add(totalParagraph);
 
         // Store Info
-        // Paragraph storeInfo =
-        //     new Paragraph(new Run(
-        //         "CA ZONE - BÌNH THẠNH\nAddress: 32/6 Hẻm 36 Nguyễn Gia Trí, P25, Quận Bình Thạnh, TP.HCM\nHotline: 0325483193"))
-        //     {
-        //         FontSize = 10,
-        //         TextAlignment = TextAlignment.Center,
-        //         FontFamily = new FontFamily("Roboto"),
-        //     };
-        // document.Blocks.Add(storeInfo);
-
+       
+        Paragraph address =
+            new Paragraph(new Run(
+                currentBranch.address))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+        document.Blocks.Add(address);
+        Paragraph phone =
+            new Paragraph(new Run(
+                currentBranch.sdt))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+        document.Blocks.Add(phone);
+       
+        Paragraph time =
+            new Paragraph(new Run(
+                currentBranch.open_close))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+        document.Blocks.Add(time);
         return document;
     }
 
@@ -650,8 +698,9 @@ public partial class TabBillCreate : UserControl
             
                     if (responseData != null && responseData.status == 200)
                     {
-                        Console.WriteLine("Create success");
-                        Console.WriteLine(responseData.data);
+                        // Console.WriteLine("Create success");
+                        // Console.WriteLine(responseData.data.bill_id.ToString());
+                        bill_id_string = responseData.data.bill_id.ToString();
                         // Nếu lưu thành công, thực hiện in hóa đơn
                         FlowDocument document = CreateBillDocument();
                         PrintBill(document);

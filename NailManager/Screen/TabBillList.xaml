@@ -271,7 +271,38 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Background" Value="{StaticResource WhiteBrush}" />
         </Style>
+        <Style TargetType="TextBox" x:Key="CurrencyInput">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="#E5E7EB"
+                            BorderThickness="1"
+                            CornerRadius="20"
+                            Padding="10">
+                            <Grid>
+                                <!--  Text input on the left  -->
+                                <ScrollViewer Margin="10,0,30,0" x:Name="PART_ContentHost" />
 
+                                <!--  Dollar sign on the right  -->
+                                <TextBlock
+                                    FontWeight="Bold"
+                                    Foreground="Gray"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,0,10,0"
+                                    Text="$"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="BorderBrush" Value="Gray" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="{StaticResource WhiteBrush}" />
+        </Style>
         <Style TargetType="Button" x:Key="ButtonCornerRadius">
             <Setter Property="Template">
                 <Setter.Value>
@@ -881,112 +912,164 @@
                                     Foreground="#374151"
                                     Margin="10,0,0,10"
                                     Text="Product Information" />
-                                <ScrollViewer
-                                    Height="350"
-                                    Margin="0,10,0,0"
-                                    VerticalScrollBarVisibility="Auto">
-                                    <ItemsControl ItemsSource="{Binding FilteredProducts}" x:Name="ProductListView">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel
-                                                    ItemHeight="200"
-                                                    ItemWidth="370"
-                                                    Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border
-                                                    Background="#FFF8F0"
-                                                    BorderBrush="#E4E4E7"
-                                                    BorderThickness="1"
-                                                    CornerRadius="12"
-                                                    Height="176"
-                                                    Margin="10"
-                                                    Padding="5"
-                                                    Width="350">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Border
-                                                            Background="White"
-                                                            CornerRadius="20"
-                                                            Height="150"
-                                                            Margin="10"
-                                                            Width="150">
-                                                            <Image
+                                <StackPanel>
+                                    <StackPanel HorizontalAlignment="Left">
+                                        <Border
+                                            Background="#FFF8F0"
+                                            BorderBrush="#E4E4E7"
+                                            BorderThickness="1"
+                                            CornerRadius="12"
+                                            Height="100"
+                                            Margin="10"
+                                            Padding="5"
+                                            Width="350">
+                                            <StackPanel Orientation="Horizontal">
+                                                <!--  Image Frame  -->
+                                                <StackPanel Width="270">
+                                                    <TextBlock
+                                                        FontFamily="Inter"
+                                                        FontSize="18"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="#392F5A"
+                                                        Text="Other service" />
+                                                    <TextBox
+                                                        FontSize="16"
+                                                        Margin="0,10,0,0"
+                                                        Style="{StaticResource CurrencyInput}"
+                                                        Text=""
+                                                        x:Name="OrderServiceTextBox" />
+                                                </StackPanel>
+                                                <!--  Caption Frame  -->
+                                                <StackPanel
+                                                    Height="80"
+                                                    Orientation="Vertical"
+                                                    Width="60">
+                                                    <StackPanel
+                                                        HorizontalAlignment="Stretch"
+                                                        Margin="0,12,0,0"
+                                                        VerticalAlignment="Center">
+                                                        <Border Height="20" />
+                                                        <Button Click="OnAddOtherService" Style="{StaticResource IconButtonStyle}">
+                                                            <Button.Content>
+                                                                <faWpf:ImageAwesome
+                                                                    Foreground="#FFF8F0"
+                                                                    Height="20"
+                                                                    Icon="Plus"
+                                                                    Width="20" />
+                                                            </Button.Content>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                    <ScrollViewer
+                                        Height="310"
+                                        Margin="0,10,0,0"
+                                        VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding FilteredProducts}" x:Name="ProductListView">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel
+                                                        ItemHeight="200"
+                                                        ItemWidth="370"
+                                                        Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border
+                                                        Background="#FFF8F0"
+                                                        BorderBrush="#E4E4E7"
+                                                        BorderThickness="1"
+                                                        CornerRadius="12"
+                                                        Height="176"
+                                                        Margin="10"
+                                                        Padding="5"
+                                                        Width="350">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Border
+                                                                Background="White"
+                                                                CornerRadius="20"
                                                                 Height="150"
-                                                                Source="{Binding url_image}"
-                                                                Stretch="UniformToFill"
-                                                                Width="150" />
-                                                        </Border>
-                                                        <StackPanel
-                                                            Height="160"
-                                                            Orientation="Vertical"
-                                                            Width="182">
-                                                            <TextBlock
-                                                                FontFamily="Inter"
-                                                                FontSize="18"
-                                                                FontWeight="SemiBold"
-                                                                Foreground="#392F5A"
-                                                                Margin="0,4,0,0"
-                                                                MaxWidth="150"
-                                                                Text="{Binding product_name}"
-                                                                TextWrapping="Wrap" />
-                                                            <StackPanel Height="10" />
+                                                                Margin="10"
+                                                                Width="150">
+                                                                <Image
+                                                                    Height="150"
+                                                                    Source="{Binding url_image}"
+                                                                    Stretch="UniformToFill"
+                                                                    Width="150" />
+                                                            </Border>
                                                             <StackPanel
-                                                                HorizontalAlignment="Stretch"
-                                                                Margin="0,12,0,0"
-                                                                Orientation="Horizontal"
-                                                                VerticalAlignment="Bottom">
+                                                                Height="160"
+                                                                Orientation="Vertical"
+                                                                Width="182">
+                                                                <TextBlock
+                                                                    FontFamily="Inter"
+                                                                    FontSize="18"
+                                                                    FontWeight="SemiBold"
+                                                                    Foreground="#392F5A"
+                                                                    Margin="0,4,0,0"
+                                                                    MaxWidth="150"
+                                                                    Text="{Binding product_name}"
+                                                                    TextWrapping="Wrap" />
+                                                                <StackPanel Height="10" />
                                                                 <StackPanel
-                                                                    Height="38"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    Margin="0,12,0,0"
                                                                     Orientation="Horizontal"
-                                                                    Width="96">
-                                                                    <TextBlock
-                                                                        FontFamily="Inter"
-                                                                        FontSize="24"
-                                                                        FontWeight="Bold"
-                                                                        Foreground="#392F5A"
-                                                                        Text="$"
-                                                                        VerticalAlignment="Center" />
-                                                                    <TextBlock
-                                                                        FontFamily="Inter"
-                                                                        FontSize="24"
-                                                                        FontWeight="Bold"
-                                                                        Foreground="#392F5A"
-                                                                        Margin="4,0,0,0"
-                                                                        Text="{Binding price}"
-                                                                        VerticalAlignment="Center" />
-                                                                </StackPanel>
-                                                                <Button Click="OnPlusButtonClick" Style="{StaticResource IconButtonStyle}">
-                                                                    <Button.Content>
-                                                                        <faWpf:ImageAwesome
-                                                                            Foreground="#FFF8F0"
-                                                                            Height="20"
-                                                                            Width="20">
-                                                                            <faWpf:ImageAwesome.Style>
-                                                                                <Style TargetType="{x:Type faWpf:ImageAwesome}">
-                                                                                    <Style.Triggers>
-                                                                                        <DataTrigger Binding="{Binding IsChecked}" Value="True">
-                                                                                            <Setter Property="Icon" Value="Check" />
-                                                                                        </DataTrigger>
-                                                                                        <DataTrigger Binding="{Binding IsChecked}" Value="False">
-                                                                                            <Setter Property="Icon" Value="Plus" />
-                                                                                        </DataTrigger>
-                                                                                    </Style.Triggers>
-                                                                                </Style>
-                                                                            </faWpf:ImageAwesome.Style>
-                                                                        </faWpf:ImageAwesome>
-                                                                    </Button.Content>
-                                                                </Button>
+                                                                    VerticalAlignment="Bottom">
+                                                                    <StackPanel
+                                                                        Height="38"
+                                                                        Orientation="Horizontal"
+                                                                        Width="96">
+                                                                        <TextBlock
+                                                                            FontFamily="Inter"
+                                                                            FontSize="24"
+                                                                            FontWeight="Bold"
+                                                                            Foreground="#392F5A"
+                                                                            Text="$"
+                                                                            VerticalAlignment="Center" />
+                                                                        <TextBlock
+                                                                            FontFamily="Inter"
+                                                                            FontSize="24"
+                                                                            FontWeight="Bold"
+                                                                            Foreground="#392F5A"
+                                                                            Margin="4,0,0,0"
+                                                                            Text="{Binding price}"
+                                                                            VerticalAlignment="Center" />
+                                                                    </StackPanel>
+                                                                    <Button Click="OnPlusButtonClick" Style="{StaticResource IconButtonStyle}">
+                                                                        <Button.Content>
+                                                                            <faWpf:ImageAwesome
+                                                                                Foreground="#FFF8F0"
+                                                                                Height="20"
+                                                                                Width="20">
+                                                                                <faWpf:ImageAwesome.Style>
+                                                                                    <Style TargetType="{x:Type faWpf:ImageAwesome}">
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding IsChecked}" Value="True">
+                                                                                                <Setter Property="Icon" Value="Check" />
+                                                                                            </DataTrigger>
+                                                                                            <DataTrigger Binding="{Binding IsChecked}" Value="False">
+                                                                                                <Setter Property="Icon" Value="Plus" />
+                                                                                            </DataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </faWpf:ImageAwesome.Style>
+                                                                            </faWpf:ImageAwesome>
+                                                                        </Button.Content>
+                                                                    </Button>
 
+                                                                </StackPanel>
                                                             </StackPanel>
                                                         </StackPanel>
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </ScrollViewer>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
@@ -1230,26 +1313,28 @@
                                     </Button.Visibility>
                                 </Button>
                                 <StackPanel Width="30" />
-                                <!--  <Button  -->
-                                <!--  Background="Red"  -->
-                                <!--  BorderThickness="0"  -->
-                                <!--  Click="UpdateBill_Click"  -->
-                                <!--  Content="Cancel Bill"  -->
-                                <!--  FontSize="18"  -->
-                                <!--  Foreground="White"  -->
-                                <!--  Height="50"  -->
-                                <!--  Margin="0,10,0,0"  -->
-                                <!--  Style="{StaticResource ButtonCornerRadius}"  -->
-                                <!--  Width="100">  -->
-                                <!--     <Button.Visibility> -->
-                                <!--         <Binding Path="IsBillSelected"> -->
-                                <!--             <Binding.Converter> -->
-                                <!--                 <BooleanToVisibilityConverter /> -->
-                                <!--             </Binding.Converter> -->
-                                <!--         </Binding> -->
-                                <!--     </Button.Visibility> -->
-                                <!-- </Button> -->
-                                <!-- <StackPanel Width="30" /> -->
+                                <Button
+                                    Background="Red"
+                                    BorderThickness="0"
+                                    Click="CancelBill"
+                                    Content="Cancel Bill"
+                                    FontSize="18"
+                                    Foreground="White"
+                                    Height="50"
+                                    Margin="0,10,0,0"
+                                    Name="CancelBillName"
+                                    Style="{StaticResource ButtonCornerRadius}"
+                                    Width="100">
+                                    <Button.Visibility>
+                                        <Binding Path="CancelBillName.Visibility">
+                                            <Binding.Converter>
+                                                <BooleanToVisibilityConverter />
+                                            </Binding.Converter>
+                                        </Binding>
+                                    </Button.Visibility>
+                                </Button>
+
+                                <StackPanel Width="30" />
                             </StackPanel>
 
                         </StackPanel>

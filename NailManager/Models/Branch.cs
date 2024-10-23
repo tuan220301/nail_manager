@@ -4,8 +4,12 @@ public class Branch
 {
     public int branch_id { get; set; }
     public string name { get; set; }
-    public string address { get; set; }
     public int status { get; set; }
+    public string address { get; set; }
+    public string open_close { get; set; }
+    public string sdt { get; set; }
+    public string website { get; set; }
+    public string description { get; set; }
 }
 
 // Define the API response class

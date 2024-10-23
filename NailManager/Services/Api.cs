@@ -137,6 +137,42 @@ namespace NailManager.Services
                 }
             }
         }
+        public async Task PostApiAsyncWithoutParam(string url, Action<string> callback)
+        {
+            ApiConnect apiConnect = new ApiConnect();
+            string apiUrl = apiConnect.Url + url;
+
+            using (HttpClient client = new HttpClient())
+            {
+                string token = await GetAccessTokenAsync();
+                if (!string.IsNullOrEmpty(token))
+                {
+                    client.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                }
+
+                try
+                {
+                    // Thực hiện yêu cầu POST mà không có body hay tham số
+                    HttpResponseMessage response = await client.PostAsync(apiUrl, null);
+
+                    // Đọc nội dung phản hồi từ API
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    // Đảm bảo không có lỗi khi thực hiện yêu cầu
+                    response.EnsureSuccessStatusCode();
+
+                    // Gọi callback với phản hồi từ API
+                    callback(responseBody);
+                }
+                catch (HttpRequestException e)
+                {
+                    // Gọi callback với thông báo lỗi
+                    callback($"Error: {e.Message}");
+                }
+            }
+        }
+
 
         public async Task PostMultipartApiAsync(string url, MultipartFormDataContent content, Action<string> callback)
         {
