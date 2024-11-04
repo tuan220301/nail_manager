@@ -126,8 +126,8 @@ namespace NailManager.Screen
                             if (data != null)
                             {
                                 string dataAsString = JsonConvert.SerializeObject(data, Formatting.Indented);
-                                Console.WriteLine("Response from login");
-                                Console.WriteLine(dataAsString);
+                                // Console.WriteLine("Response from login");
+                                // Console.WriteLine(dataAsString);
 
                                 // Sử dụng try-catch trong việc lưu thông tin người dùng
                                 try

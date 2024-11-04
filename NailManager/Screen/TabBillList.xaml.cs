@@ -36,11 +36,12 @@ namespace NailManager.Screen
             }
         }
 
-        public ObservableCollection<BillFromList> Bill { get; set; }
+        private bool _isPasswordVisible = false;
+        public ObservableCollection<ListBillRespone> Bill { get; set; }
         public ICollectionView FilteredBill { get; set; }
         public ObservableCollection<UserFromListApi> Users { get; set; }
         public ICollectionView FilteredUsers { get; set; }
-        public ObservableCollection<ProductInBill> SelectedItems { get; set; }
+        public ObservableCollection<ProductInBillModel> SelectedItems { get; set; }
         public ObservableCollection<Branch> Branches { get; set; }
         private WpfSvgWindow _wpfWindow;
         private ApiConnect _apiConnect = new ApiConnect();
@@ -50,11 +51,11 @@ namespace NailManager.Screen
         public ICollectionView FilteredProducts { get; set; }
         private bool _isInitialized = false;
 
-        private BillFromList _selectedBill;
+        private ListBillRespone _selectedBill;
         private bool _isProductSelected = false;
         private Branch currentBranch;
 
-        public BillFromList SelectedBill
+        public ListBillRespone SelectedBill
         {
             get => _selectedBill;
             set
@@ -86,17 +87,16 @@ namespace NailManager.Screen
             }
         }
 
-        public string permision = "";
         public event PropertyChangedEventHandler PropertyChanged;
 
         public TabBillList()
         {
             InitializeComponent();
-            Bill = new ObservableCollection<BillFromList>();
+            Bill = new ObservableCollection<ListBillRespone>();
             Products = new ObservableCollection<Product>(); // Khởi tạo Products
             FilteredBill = CollectionViewSource.GetDefaultView(Bill);
             FilteredProducts = CollectionViewSource.GetDefaultView(Products);
-            SelectedItems = new ObservableCollection<ProductInBill>();
+            SelectedItems = new ObservableCollection<ProductInBillModel>();
             Users = new ObservableCollection<UserFromListApi>(); // Khởi tạo ObservableCollection cho Users
             Branches = new ObservableCollection<Branch>(); // Khởi tạo ObservableCollection cho Branches
             var wpfSettings = new WpfDrawingSettings();
@@ -105,7 +105,75 @@ namespace NailManager.Screen
             DataContext = this;
             IsBillSelected = false;
             GetBrandList();
-            GetUser();
+            MainContentBorder.Visibility = Visibility.Collapsed;
+            DatePickerInputFrom.SelectedDate = DateTime.Today;
+            DatePickerInputTo.SelectedDate = DateTime.Today;
+
+            GetStaffList();
+            TotalPrice.Text = "0.00 $";
+        }
+
+        private async void GetStaffList()
+        {
+            ShowLoading(true);
+            var user = await DatabaseHelper.GetUserAsync();
+            string url = $"/user/list?branch_id={user.BranchId}";
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            var apiService = new Api();
+
+            await apiService.GetApiAsync(url, parameters, (responseBody) =>
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(responseBody))
+                    {
+                        throw new Exception("API response is empty or null.");
+                    }
+
+                    var responseData =
+                        JsonConvert.DeserializeObject<BranchApiResponse<List<UserFromListApi>>>(responseBody);
+                    // Console.WriteLine("Parsed response object: " + Utls.FormatJsonString(responseBody));
+
+                    if (responseData == null || responseData.data == null)
+                    {
+                        throw new Exception("Failed to parse API response.");
+                    }
+
+                    if (responseData.status != 200)
+                    {
+                        throw new Exception("Failed to load users.");
+                    }
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        Users.Clear();
+                        StaffComboBox.ItemsSource = null; // Xóa các item cũ trong ComboBox
+
+                        foreach (var user in responseData.data)
+                        {
+                            Users.Add(user);
+                        }
+
+                        StaffComboBox.ItemsSource = Users;
+                        StaffComboBox.DisplayMemberPath = "name";
+                        StaffComboBox.SelectedValuePath = "user_id";
+
+                        // Đặt giá trị mặc định cho ComboBox
+                        // if (StaffComboBox.Items.Count > 0)
+                        // {
+                        //     StaffComboBox.SelectedIndex = 0;
+                        // }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error: {ex.Message}");
+                }
+                finally
+                {
+                    ShowLoading(false); // Ẩn loading khi hoàn tất
+                }
+            });
         }
 
         private async void GetBrandList()
@@ -123,14 +191,14 @@ namespace NailManager.Screen
 
                     if (responseData != null && responseData.status == 200)
                     {
-                        Dispatcher.Invoke(() =>
-                        {
-                            BranchComboBox.ItemsSource = responseData.data;
-                            BranchComboBox.DisplayMemberPath = "name";
-                            BranchComboBox.SelectedValuePath = "branch_id";
-                            BranchComboBox.SelectedValue =
-                                BranchId > 0 ? BranchId : 1; // Đặt giá trị mặc định là branch_id = 1
-                        });
+                        // Dispatcher.Invoke(() =>
+                        // {
+                        //     BranchComboBox.ItemsSource = responseData.data;
+                        //     BranchComboBox.DisplayMemberPath = "name";
+                        //     BranchComboBox.SelectedValuePath = "branch_id";
+                        //     BranchComboBox.SelectedValue =
+                        //         BranchId > 0 ? BranchId : 1; // Đặt giá trị mặc định là branch_id = 1
+                        // });
                     }
                     else
                     {
@@ -150,17 +218,17 @@ namespace NailManager.Screen
 
         private async void OnBillItemClicked(object sender, MouseButtonEventArgs e)
         {
-            if (sender is Border border && border.DataContext is BillFromList selectedBill)
+            if (sender is Border border && border.DataContext is ListBillRespone selectedBill)
             {
                 SelectedBill = selectedBill;
 
                 // Cập nhật IsBillSelected dựa trên trạng thái của hóa đơn
-                IsBillSelected = selectedBill.status == 1; // Chỉ cho phép chọn nếu status là PROCESSING
+                // IsBillSelected = selectedBill.status == 1; // Chỉ cho phép chọn nếu status là PROCESSING
 
-                IsProductSelected = IsBillSelected; // Chỉ cho phép nhấn nút Plus nếu hóa đơn đang xử lý
+                // IsProductSelected = IsBillSelected; // Chỉ cho phép nhấn nút Plus nếu hóa đơn đang xử lý
 
                 // Xây dựng URL API và tham số
-                string apiUrl = "/bill/detail";
+                string apiUrl = "/bill/branch/detail";
                 var parameters = new Dictionary<string, string>
                     { };
                 string param = JsonConvert.SerializeObject(parameters, Formatting.Indented);
@@ -177,43 +245,39 @@ namespace NailManager.Screen
                             try
                             {
                                 var responseData =
-                                    JsonConvert.DeserializeObject<BranchApiResponse<BillDetail>>(responseBody);
-                                // Console.WriteLine("responseData: " + Utls.FormatJsonString(responseBody));
+                                    JsonConvert.DeserializeObject<BranchApiResponse<BilLResponBranch>>(responseBody);
+                                Console.WriteLine("responseData: " + Utls.FormatJsonString(responseBody));
                                 if (responseData != null && responseData.status == 200)
                                 {
                                     var billDetail = responseData.data;
-
+                                
                                     // Cập nhật UI với thông tin từ billDetail
                                     CustomerNameTextBox.Text = billDetail.customer_name;
                                     PhoneNumberTextBox.Text = billDetail.customer_phone;
                                     TotalPrice.Text = $"{billDetail.total_price} $";
-                                    UserIdTextBox.Text = billDetail.user_id.ToString();
-                                    StaffTextBox.Text = billDetail.name;
-                                    BillIdTextBox.Text = billDetail.bill_id.ToString();
-                                    PaymentMethod.SelectedIndex = billDetail.pay_method == 1 ? 0 : 1;
-
                                     SelectedItems.Clear();
-                                    // string productsJson =
-                                    //     JsonConvert.SerializeObject(billDetail.products, Formatting.Indented);
-                                    // Console.WriteLine("Bill Detail Products:");
-                                    // Console.WriteLine(productsJson);
-                                    foreach (var product in billDetail.products)
+                                    string productsJson =
+                                        JsonConvert.SerializeObject(billDetail, Formatting.Indented);
+                                    Console.WriteLine("Bill Detail Products:");
+                                    Console.WriteLine(productsJson);
+                                    foreach (var product in billDetail.service)
                                     {
                                         // Kiểm tra độ dài của product_name trước khi cắt
-                                        string displayName = product.product_name.Length > 25
-                                            ? product.product_name.Substring(0, 25) + "..."
-                                            : product.product_name;
-
-                                        SelectedItems.Add(new ProductInBill()
+                                        // string displayName = product.product_name.Length > 25
+                                        //     ? product.product_name.Substring(0, 25) + "..."
+                                        //     : product.product_name;
+                                    
+                                        SelectedItems.Add(new ProductInBillModel()
                                         {
-                                            product_id = product.product_id,
-                                            product_name = displayName,
+                                            product_name = product.product_name,
                                             price = product.price,
+                                            bill_id = product.bill_id,
+                                            user_id = product.user_id,
+                                            user_name = ShowNameEmployee(product.user_id),
+                                            bill_detail_id = product.bill_detail_id,
+                                            service_fee = product.service_fee
                                         });
                                     }
-
-                                    RefreshSelectedItems();
-                                    UpdateProductSelectionState();
                                     TotalPriceChanged();
                                 }
                                 else
@@ -236,298 +300,94 @@ namespace NailManager.Screen
             }
         }
 
-
-        private void OnPlusButtonClick(object sender, RoutedEventArgs e)
+        private string ShowNameEmployee(int employeID)
         {
-            if (sender is Button button && button.DataContext is Product selectedProduct)
-            {
-                // Kiểm tra xem sản phẩm đã tồn tại trong SelectedItems chưa
-                var existingItem = SelectedItems.FirstOrDefault(item => item.product_id == selectedProduct.product_id);
-
-                if (existingItem != null)
-                {
-                    // Nếu sản phẩm đã tồn tại, không làm gì cả hoặc hiển thị thông báo
-                    MessageBox.Show("This product is already in the list.");
-                }
-                else
-                {
-                    string displayName = selectedProduct.product_name.Length > 25
-                        ? selectedProduct.product_name.Substring(0, 25) + "..."
-                        : selectedProduct.product_name;
-                    // Nếu sản phẩm chưa tồn tại, thêm sản phẩm mới vào danh sách
-                    SelectedItems.Add(new ProductInBill
-                    {
-                        product_id = selectedProduct.product_id,
-                        product_name = displayName,
-                        price = selectedProduct.price,
-                        IsNewlyAdded = true // Đánh dấu sản phẩm mới được thêm
-                    });
-
-                    // Cập nhật tổng tiền
-                    TotalPriceChanged();
-                    RefreshSelectedItems();
-                    UpdateProductSelectionState();
-                }
-            }
+            var EmployeeIsFilted = Users.FirstOrDefault(x => x.user_id == employeID);
+            return EmployeeIsFilted.name;
         }
 
-
-        private void OnRemoveItemClick(object sender, RoutedEventArgs e)
+        private void PrintListBill_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.DataContext is ProductInBill product)
+            if (FilteredBill == null || FilteredBill.IsEmpty)
             {
-                SelectedItems.Remove(product);
-                TotalPriceChanged();
-                UpdateProductSelectionState();
-            }
-        }
-
-        private void UpdateProductSelectionState()
-        {
-            foreach (var product in Products)
-            {
-                // Kiểm tra nếu sản phẩm có trong danh sách SelectedItems
-                product.IsChecked = SelectedItems.Any(item => item.product_id == product.product_id);
-            }
-        }
-
-        private async void GetListProduct(int branchId = 1)
-        {
-            ShowLoading(true);
-
-            string url = $"/product/list?branch_id={branchId}";
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            var apiService = new Api();
-
-            await apiService.GetApiAsync(url, parameters, (responseBody) =>
-            {
-                try
-                {
-                    if (string.IsNullOrEmpty(responseBody))
-                    {
-                        throw new Exception("API response is empty or null.");
-                    }
-
-                    var responseData = JsonConvert.DeserializeObject<BranchApiResponse<List<Product>>>(responseBody);
-                    // Console.WriteLine("GetListProduct: " + responseData);
-                    if (responseData == null)
-                    {
-                        throw new Exception("Failed to parse API response.");
-                    }
-
-                    if (responseData.status != 200 || responseData.data == null)
-                    {
-                        throw new Exception("Failed to load products.");
-                    }
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        Products.Clear(); // Xóa dữ liệu cũ
-                        foreach (var product in responseData.data)
-                        {
-                            Products.Add(product);
-                        }
-
-                        FilteredProducts.Refresh(); // Làm mới CollectionView để cập nhật UI
-                    });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error: {ex.Message}");
-                }
-                finally
-                {
-                    ShowLoading(false); // Ẩn loading khi hoàn tất
-                }
-            });
-        }
-
-        private void RefreshSelectedItems()
-        {
-            ItemsControl itemsControl = FindName("SelectedItemsControl") as ItemsControl;
-            if (itemsControl != null)
-            {
-                itemsControl.Items.Refresh();
-            }
-        }
-
-        private async void UpdateBill_Click(object sender, RoutedEventArgs e)
-        {
-            Button clickedButton = sender as Button;
-            if (clickedButton == null) return;
-
-            // Lấy nội dung của nút để phân biệt hành động
-            string buttonText = clickedButton.Content.ToString();
-
-            // Nếu nút "Cancel Bill" được nhấn, hiển thị cảnh báo
-            if (buttonText == "Cancel Bill")
-            {
-                MessageBoxResult result = MessageBox.Show(
-                    "Canceling this bill will make it uneditable. Are you sure you want to cancel?",
-                    "Confirmation",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                // Nếu người dùng chọn "No", dừng quá trình
-                if (result == MessageBoxResult.No)
-                {
-                    return;
-                }
+                MessageBox.Show("No bills to print.");
+                return;
             }
 
-            ShowLoading(true); // Hiển thị loading
-
-            try
+            FlowDocument document = new FlowDocument
             {
-                // Lấy thông tin từ form
-                string customerName = CustomerNameTextBox.Text;
-                string customerPhone = PhoneNumberTextBox.Text;
+                PageWidth = 275,
+                PagePadding = new Thickness(10),
+                ColumnWidth = double.PositiveInfinity
+            };
 
-                // Lấy thông tin nhân viên từ TextBox
-                int userId = int.Parse(UserIdTextBox.Text);
-                string branchId = BranchComboBox.SelectedValue.ToString();
-
-                // Lấy thông tin giảm giá từ TextBox
-                int discount = 0;
-
-                // Lấy giá trị của Tag từ ComboBox PaymentMethod
-                var selectedPaymentMethod = PaymentMethod.SelectedItem as ComboBoxItem;
-                int paymentMethod = selectedPaymentMethod != null
-                    ? int.Parse(selectedPaymentMethod.Tag.ToString())
-                    : 1; // Mặc định là 1 nếu không chọn được
-
-                // Tìm sản phẩm "Other service" (có product_id = -1)
-                var otherService = SelectedItems.FirstOrDefault(item => item.product_id == -1);
-                double otherPrice = otherService?.price ?? 0; // Lấy giá của "Other service", mặc định là 0 nếu không có
-
-                // Tạo danh sách sản phẩm, loại bỏ sản phẩm "Other service" có product_id = -1
-                var products = SelectedItems
-                    .Where(item => item.product_id != -1) // Loại bỏ sản phẩm "Other service"
-                    .Select(item => item.product_id)
-                    .ToList();
-
-                // Xác định bill_id từ hệ thống của bạn
-                int billId = int.Parse(BillIdTextBox.Text);
-
-                // Xác định đường dẫn API với bill_id
-                string apiUrl = $"/bill/update?bill_id={billId}";
-
-                // Xác định trạng thái dựa trên nút được nhấn
-                int status = 0; // Mặc định là Cancel (nếu "Cancel Bill" được nhấn)
-                if (buttonText == "Print")
-                {
-                    status = 2; // Trạng thái in bill
-                }
-
-                // Tạo dữ liệu dựa trên API
-                var parameters = new Dictionary<string, object>
-                {
-                    { "customer_name", customerName },
-                    { "customer_phone", customerPhone },
-                    { "branch_id", Int32.Parse(branchId) },
-                    { "user_id", userId },
-                    { "discount", discount },
-                    { "pay_method", paymentMethod },
-                    { "products", products }, // Danh sách sản phẩm đã loại trừ "Other service"
-                    { "other_price", otherPrice }, // Giá của "Other service"
-                    { "status", status }
-                };
-
-                string jsonContent = JsonConvert.SerializeObject(parameters, Formatting.Indented);
-                // Console.WriteLine("JSON param update: " + jsonContent);
-
-                var apiService = new Api();
-                await apiService.PostApiAsync(apiUrl, jsonContent, (responseBody) =>
-                {
-                    string responseBodyJSON = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
-                    Console.WriteLine(responseBodyJSON);
-
-                    try
-                    {
-                        var responseData =
-                            JsonConvert.DeserializeObject<BranchApiResponse<BillResponseData>>(responseBody);
-                        if (responseData != null && responseData.status == 200)
-                        {
-                            GetBills(); // Cập nhật lại danh sách bill
-
-                            if (status == 2) // In hóa đơn nếu nhấn "Print"
-                            {
-                                FlowDocument document = CreateBillDocument(billId.ToString());
-                                PrintBill(document);
-                                ClearOrderDetails();
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
-                            MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}", "API Error",
-                                MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error parsing response: {ex.Message}");
-                        MessageBox.Show($"Error parsing response: {ex.Message}", "Error", MessageBoxButton.OK,
-                            MessageBoxImage.Error);
-                    }
-                });
-            }
-            catch (Exception ex)
+            // Thêm tiêu đề
+            Paragraph title = new Paragraph(new Run("Bill List"))
             {
-                Console.WriteLine($"Error: {ex.Message}");
-                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(title);
+            Paragraph FromDate = new Paragraph(new Run("From: " + DatePickerInputFrom.SelectedDate.ToString()))
             {
-                ShowLoading(false); // Ẩn loading khi hoàn tất
-            }
-        }
-
-        private void OnAddOtherService(object sender, RoutedEventArgs e)
-        {
-            // Lấy giá trị từ TextBox (giá tiền cho dịch vụ)
-            string inputPriceText = OrderServiceTextBox.Text;
-
-            // Kiểm tra xem người dùng có nhập giá hợp lệ không
-            if (double.TryParse(inputPriceText, out double servicePrice))
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(FromDate);
+            Paragraph ToDate = new Paragraph(new Run("To: " + DatePickerInputTo.SelectedDate.ToString()))
             {
-                // Kiểm tra xem sản phẩm "Other service" (với product_id = -1) đã tồn tại trong danh sách SelectedItems hay chưa
-                var existingService = SelectedItems.FirstOrDefault(item => item.product_id == -1);
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(ToDate);
 
-                if (existingService != null)
+            // Thêm tiêu đề bảng
+            document.Blocks.Add(CreateHeaderRow(new[] { "Bill ID", "Customer","Total ($)" }));
+
+            // Thêm các dòng hóa đơn
+            int index = 1;
+            foreach (ListBillRespone bill in FilteredBill)
+            {
+                document.Blocks.Add(CreateLineRow(new[]
                 {
-                    // Nếu sản phẩm "Other service" đã tồn tại, cập nhật giá mới nhất
-                    existingService.price = servicePrice;
-                }
-                else
-                {
-                    // Nếu chưa tồn tại, tạo sản phẩm mới với tên "Other service"
-                    var newProduct = new ProductInBill
-                    {
-                        product_id = -1, // ID dành cho sản phẩm "Other service"
-                        product_name = "Other service", // Tên sản phẩm
-                        price = servicePrice, // Giá tiền nhập vào
-                    };
-
-                    // Thêm sản phẩm mới vào danh sách SelectedItems
-                    SelectedItems.Add(newProduct);
-                }
-
-                // Cập nhật tổng tiền sau khi thêm/cập nhật sản phẩm
-                TotalPriceChanged();
-
-                // Làm mới danh sách SelectedItems trên giao diện người dùng
-                RefreshSelectedItems();
-
-                // Cập nhật trạng thái chọn sản phẩm
-                UpdateProductSelectionState();
+                    bill.bill_id.ToString(),
+                    bill.customer_name,
+                    bill.total_price.ToString("N2"),
+                }));
+                index++;
             }
-            else
+            Paragraph totalBill = new Paragraph(new Run("Total Bill: " + TotalBill.Text))
             {
-                // Nếu giá trị không hợp lệ, thông báo lỗi
-                MessageBox.Show("Please enter a valid price for Other service.", "Invalid Input", MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-            }
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(totalBill);
+            Paragraph totalPrice = new Paragraph(new Run("Total Price: " + TotalMoney.Text))
+            {
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(totalPrice);
+            Paragraph totalProfit = new Paragraph(new Run("Total Profit: " + EmployeeProfit.Text))
+            {
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(totalProfit);
+            // Thực hiện in tài liệu
+            PrintBill(document);
         }
 
         private void TotalPriceChanged()
@@ -535,36 +395,14 @@ namespace NailManager.Screen
             double total = 0.0;
             foreach (var item in SelectedItems)
             {
-                total += item.price; // Cộng giá của mỗi sản phẩm
+                total += item.price + item.service_fee; // Cộng giá của mỗi sản phẩm
             }
 
             TotalPrice.Text = total.ToString("F2") + " $"; // Định dạng số thành chuỗi có 2 chữ số thập phân
         }
 
-
-        private void BranchComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (BranchComboBox.SelectedValue != null)
-            {
-                int branchId = (int)BranchComboBox.SelectedValue;
-                // Console.WriteLine("branchId in get BranchComboBox_SelectionChanged: " + branchId);
-                DateTime fromDate = DateTime.Today;
-                DateTime toDate = DateTime.Today;
-                if (BranchComboBox.SelectedItem is Branch selectedBranch)
-                {
-                    Address = selectedBranch.address; // Lấy địa chỉ từ đối tượng Branch
-                    // Console.WriteLine("Selected Branch Address: " + Address);
-                    // Thực hiện các hành động khác với địa chỉ này, ví dụ hiển thị trên UI hoặc lưu trữ
-                }
-
-                currentBranch = BranchComboBox.SelectedItem as Branch;
-                GetListProduct(branchId);
-                GetBills(fromDate, toDate, branchId);
-            }
-        }
-
-        private async Task GetBills(DateTime? fromDate = null, DateTime? toDate = null, int branchId = 0,
-            int? billId = null)
+        private async Task GetBills(DateTime? fromDate = null, DateTime? toDate = null, int? billId = null,
+            int? employeeId = null)
         {
             // Console.WriteLine("get bills is called");
             ShowLoading(true);
@@ -572,7 +410,8 @@ namespace NailManager.Screen
             try
             {
                 // Sử dụng branchId được truyền vào hoặc mặc định là BranchId
-                branchId = branchId > 0 ? branchId : BranchId;
+                var user = await DatabaseHelper.GetUserAsync();
+                var branchId = user.BranchId;
                 fromDate ??= DateTime.Today;
                 toDate ??= DateTime.Today;
 
@@ -591,7 +430,7 @@ namespace NailManager.Screen
                 // Console.WriteLine("endDay: " + endDay);
 
                 // Xây dựng URL API
-                string apiUrl = "/bill/get";
+                string apiUrl = "/bill/branch/get";
 
                 // Xây dựng nội dung yêu cầu POST
                 var parameters = new Dictionary<string, string>
@@ -607,6 +446,11 @@ namespace NailManager.Screen
                     parameters.Add("bill_id", billId.Value.ToString());
                 }
 
+                if (employeeId.HasValue)
+                {
+                    parameters.Add("user_id", employeeId.Value.ToString());
+                }
+
                 Console.WriteLine("Parameters for API request:");
                 foreach (var param in parameters)
                 {
@@ -620,36 +464,37 @@ namespace NailManager.Screen
                 {
                     try
                     {
-                        var responseData = JsonConvert.DeserializeObject<BillListRespon>(responseBody);
-                        // var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
-                        // Console.WriteLine("responseconvert in get Bill in bill list");
-                        // Console.WriteLine(responseconvert);
+                        var responseData = JsonConvert.DeserializeObject<ListBillModel>(responseBody);
+                        var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
+                        Console.WriteLine("responseconvert in get Bill in bill list");
+                        Console.WriteLine(responseconvert);
 
                         if (responseData != null && responseData.status == 200)
                         {
                             Bill.Clear();
                             TotalMoney.Text = (responseData.data.total_price != 0 ? responseData.data.total_price : 0) +
                                               " $";
-                            TotalCredit.Text =
-                                (responseData.data.total_credit != 0 ? responseData.data.total_credit : 0) + " $";
-                            TotalCash.Text = (responseData.data.total_cash != 0 ? responseData.data.total_cash : 0) +
-                                             " $";
+                            EmployeeProfit.Text =
+                                (responseData.data.total_profit != 0 ? responseData.data.total_profit : 0) + " $";
+
                             TotalBill.Text = (responseData.data.total_bill != 0 ? responseData.data.total_bill : 0)
                                 .ToString();
                             foreach (var bill in responseData.data.list)
                             {
                                 // Console.WriteLine("bill.customer_phone: " + bill.customer_phone);
-                                Bill.Add(new BillFromList
+                                var status_convert = FormatStatus(bill.status);
+                                // Console.WriteLine("status_convert: " + status_convert);
+                                Bill.Add(new ListBillRespone
                                 {
                                     bill_id = bill.bill_id,
                                     customer_name = bill.customer_name,
                                     customer_phone = bill.customer_phone,
                                     branch_id = bill.branch_id,
-                                    pay_method = bill.pay_method,
-                                    user_id = bill.user_id,
+                                    // pay_method = bill.pay_method,
+                                    // user_id = bill.user_id,
                                     total_price = bill.total_price,
-                                    discount = bill.discount,
-                                    status = bill.status,
+                                    // discount = bill.discount,
+                                    status = status_convert,
                                 });
                             }
 
@@ -678,6 +523,10 @@ namespace NailManager.Screen
             }
         }
 
+        private string FormatStatus(string status)
+        {
+            return status == "1" ? "Success" : "Cancel";
+        } 
 
         private void BillIdTextBox_KeyDown(object sender, KeyEventArgs e)
         {
@@ -690,27 +539,42 @@ namespace NailManager.Screen
 
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
-            // Lấy giá trị bill ID từ TextBox
+            // Lấy giá trị từ TextBox Bill ID
             int.TryParse(BillIdSearch.Text, out int billId);
 
-            // Nếu nhập ID bill hợp lệ, gọi GetBills với billId
-            if (billId > 0)
-            {
-                await GetBills(billId: billId);
-                UpdateProductSelectionState();
-            }
-            else
-            {
-                MessageBox.Show("Please enter a valid Bill ID.", "Invalid Input", MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-            }
+            // Lấy ID của nhân viên từ ComboBox nếu có lựa chọn
+            var selectedEmployee = StaffComboBox.SelectedItem as UserFromListApi;
+            int? employeeId = selectedEmployee?.user_id;
+
+            // Lấy giá trị từ DatePicker
+            DateTime? fromDate = DatePickerInputFrom.SelectedDate;
+            DateTime? toDate = DatePickerInputTo.SelectedDate;
+
+            // Gọi GetBills với các tham số vừa lấy
+            await GetBills(fromDate: fromDate, toDate: toDate, billId: billId > 0 ? billId : null,
+                employeeId: employeeId);
+
+            // UpdateProductSelectionState();
         }
 
         private async void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            BillIdTextBox.Text = "";
-            // Gọi GetBills mà không truyền ID bill để lấy toàn bộ danh sách
-            UpdateProductSelectionState();
+            BillIdSearch.Text = string.Empty;
+            CustomerNameTextBox.Text= string.Empty;
+            PhoneNumberTextBox.Text = string.Empty;
+            // Đặt ComboBox về giá trị ban đầu
+            StaffComboBox.SelectedIndex = -1;
+
+            // Xóa giá trị trong DatePicker
+            DatePickerInputFrom.SelectedDate = DateTime.Today;
+            DatePickerInputTo.SelectedDate = DateTime.Today;
+
+            // Xóa danh sách sản phẩm đã chọn
+            SelectedItems.Clear();
+
+            // Cập nhật lại tổng giá
+            TotalPrice.Text = "0.00 $"; // Hoặc giá trị mặc định
+
             await GetBills();
         }
 
@@ -735,6 +599,62 @@ namespace NailManager.Screen
             {
                 MessageBox.Show($"Error loading SVG: {ex.Message}");
                 return null;
+            }
+        }
+
+        private async void CancelBill(object sender, RoutedEventArgs e)
+        {
+            if (SelectedBill == null)
+            {
+                MessageBox.Show("Please select a bill to cancel.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            ShowLoading(true); // Hiển thị loading trong quá trình gọi API
+            string apiUrl = "/bill/delete?bill_id=" + SelectedBill.bill_id;
+            // var parameters = new Dictionary<string, string>
+            // {
+            //     { "bill_id", SelectedBill.bill_id.ToString() }
+            // };
+            // Console.WriteLine("Parameters for API request cancel:");
+            // foreach (var param in parameters)
+            // {
+            //     Console.WriteLine($"{param.Key}: {param.Value}");
+            // }
+            try
+            {
+                var apiService = new Api();
+                await apiService.PostApiAsyncWithoutParam(apiUrl, (responseBody) =>
+                {
+                    var responseData = JsonConvert.DeserializeObject<APIResponFromCancelBill>(responseBody); // Đảm bảo `ApiResponse` là lớp phù hợp để phân tích kết quả.
+                    var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
+                    Console.WriteLine("responseconvert when cancel");
+                    Console.WriteLine(responseconvert);
+                    if (responseData != null && responseData.status == 200)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            // Xóa hóa đơn khỏi danh sách và làm mới giao diện
+                            // Bill.Remove(SelectedBill);
+                            FilteredBill.Refresh();
+                            SelectedBill = null;
+                            GetBills();
+                            MessageBox.Show("Bill has been successfully canceled.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                        });
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Failed to cancel the bill: {responseData?.message ?? "Unknown error"}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                ShowLoading(false); // Ẩn loading khi hoàn tất
             }
         }
 
@@ -807,15 +727,15 @@ namespace NailManager.Screen
             document.Blocks.Add(title);
 
             // Bill Info
-            Paragraph billInfo =
-                new Paragraph(new Run(
-                    $"InvoiceID: #{billId}\nStaff: {StaffTextBox.Text}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
-                {
-                    FontSize = 12,
-                    TextAlignment = TextAlignment.Left,
-                    FontFamily = new FontFamily("Roboto"),
-                };
-            document.Blocks.Add(billInfo);
+            // Paragraph billInfo =
+            //     new Paragraph(new Run(
+            //         $"InvoiceID: #{billId}\nStaff: {StaffTextBox.Text}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
+            //     {
+            //         FontSize = 12,
+            //         TextAlignment = TextAlignment.Left,
+            //         FontFamily = new FontFamily("Roboto"),
+            //     };
+            // document.Blocks.Add(billInfo);
 
             // Table Header
             document.Blocks.Add(CreateHeaderRow(new[] { "NO", "Name", "Price" }));
@@ -889,9 +809,9 @@ namespace NailManager.Screen
 
             Grid grid = new Grid();
 
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(25) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
 
             for (int i = 0; i < columns.Length; i++)
             {
@@ -939,9 +859,9 @@ namespace NailManager.Screen
 
             Grid grid = new Grid();
 
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(25) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
 
             for (int i = 0; i < columns.Length; i++)
             {
@@ -979,151 +899,31 @@ namespace NailManager.Screen
         private void PrintBill(FlowDocument document)
         {
             PrintDialog printDialog = new PrintDialog();
-            // if (printDialog.ShowDialog() == true)
-            // {
-            //     IDocumentPaginatorSource idpSource = document;
-            //     printDialog.PrintDocument(idpSource.DocumentPaginator, "Bill Print");
-            // }
+          
             var printQueue = printDialog.PrintQueue;
             XpsDocumentWriter writer = PrintQueue.CreateXpsDocumentWriter(printQueue);
             writer.Write(((IDocumentPaginatorSource)document).DocumentPaginator);
         }
 
-        private async void GetUser()
-        {
-            ShowLoading(true);
-
-            try
-            {
-                var user = await DatabaseHelper.GetUserAsync();
-                if (user != null)
-                {
-                    Console.WriteLine("user.BranchId in create: " + user.BranchId);
-                    BranchId = user.BranchId > 0 ? user.BranchId : 1; // Đặt BranchId là 1 nếu admin
-                    // Cập nhật lại FilterBranch.Visibility sau khi thiết lập giá trị của ComboBox
-                    permision = user.Permission;
-                    if (permision == "1")
-                    {
-                        ProductBorder.Visibility = Visibility.Collapsed;
-                        CancelBillName.Visibility = Visibility.Visible;
-                        BillListScroll.Height = 520;
-                    }
-                    else
-                    {
-                        ProductBorder.Visibility = Visibility.Visible;
-                        CancelBillName.Visibility = Visibility.Collapsed;
-                    }
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        BranchComboBox.SelectedValue = BranchId;
-                        FilterBranch.Visibility = user.BranchId > 0 ? Visibility.Collapsed : Visibility.Visible;
-                    });
-
-                    _isInitialized = true; // Đánh dấu là đã khởi tạo xong
-                    GetListProduct(BranchId); // Gọi API lần đầu tiên với BranchId đã thiết lập
-                    GetBills();
-                }
-            }
-            finally
-            {
-                ShowLoading(false);
-            }
-        }
 
         private void ClearOrderDetails()
         {
-            UserIdTextBox.Text = string.Empty;
-            StaffTextBox.Text = string.Empty;
+            // UserIdTextBox.Text = string.Empty;
+            // StaffTextBox.Text = string.Empty;
             CustomerNameTextBox.Text = string.Empty;
             PhoneNumberTextBox.Text = string.Empty;
-            BillIdTextBox.Text = string.Empty;
+            // BillIdTextBox.Text = string.Empty;
             TotalPrice.Text = string.Empty;
 
             SelectedItems.Clear();
-            RefreshSelectedItems();
         }
 
         private void OnClearOrderDetailsClick(object sender, RoutedEventArgs e)
         {
             // Xóa các giá trị trong các TextBox
             ClearOrderDetails();
-            RefreshSelectedItems();
-            UpdateProductSelectionState();
+            // UpdateProductSelectionState();
         }
-
-        private async void CancelBill(object sender, RoutedEventArgs e)
-        {
-            // Kiểm tra xem BillIdTextBox có rỗng không
-            if (string.IsNullOrWhiteSpace(BillIdTextBox.Text))
-            {
-                MessageBox.Show("Please select a valid bill.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            // Hiển thị cảnh báo trước khi hủy bill
-            MessageBoxResult result = MessageBox.Show(
-                "Canceling this bill will make it uneditable. Are you sure you want to cancel?",
-                "Confirmation",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            // Nếu người dùng chọn "No", dừng quá trình
-            if (result == MessageBoxResult.No)
-            {
-                return;
-            }
-
-            // Hiển thị loading
-            ShowLoading(true);
-
-            try
-            {
-                // Lấy bill_id từ TextBox
-                int billId = int.Parse(BillIdTextBox.Text);
-
-                // Tạo URL với query string
-                string apiUrl = $"/bill/delete?bill_id={billId}";
-
-                // Gọi API bằng phương thức của bạn
-                var apiService = new Api();
-                await apiService.PostApiAsyncWithoutParam(apiUrl,(responseBody) =>
-                {
-                    try
-                    {
-                        var responseData = JsonConvert.DeserializeObject<BranchApiResponse<object>>(responseBody);
-                        if (responseData != null && responseData.status == 200)
-                        {
-                            // Xử lý khi hủy bill thành công
-                            ClearOrderDetails(); // Xóa chi tiết đơn hàng sau khi hủy
-                            GetBills(); // Cập nhật lại danh sách bill
-                            MessageBox.Show("Bill has been successfully canceled.", "Success", MessageBoxButton.OK,
-                                MessageBoxImage.Information);
-                        }
-                        else
-                        {
-                            MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}", "API Error",
-                                MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error parsing response: {ex.Message}", "Error", MessageBoxButton.OK,
-                            MessageBoxImage.Error);
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                ShowLoading(false); // Ẩn loading khi hoàn tất
-            }
-        }
-
-
         private void ShowLoading(bool show)
         {
             Dispatcher.Invoke(() => { LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed; });
@@ -1132,6 +932,113 @@ namespace NailManager.Screen
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void SubmitKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                Submit(sender, e);
+            }
+        }
+
+        private void ShowPassword(object sender, RoutedEventArgs e)
+        {
+            _isPasswordVisible = !_isPasswordVisible;
+
+            if (_isPasswordVisible)
+            {
+                TogglePasswordIcon.Icon = FontAwesome.WPF.FontAwesomeIcon.EyeSlash;
+                VisiblePassword.Text = PasswordBox.Password;
+                VisiblePassword.Visibility = Visibility.Visible;
+                PasswordBox.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                TogglePasswordIcon.Icon = FontAwesome.WPF.FontAwesomeIcon.Eye;
+                PasswordBox.Password = VisiblePassword.Text;
+                VisiblePassword.Visibility = Visibility.Collapsed;
+                PasswordBox.Visibility = Visibility.Visible;
+            }
+        }
+
+        private async void Submit(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                LoginLoadingIcon.Visibility = Visibility.Visible;
+                string username = UsernameTextBox.Text;
+                string password = PasswordBox.Password;
+
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+                {
+                    ErrorMessageTextBlock.Text = "Please fill in both fields.";
+                    ErrorMessageTextBlock.Visibility = Visibility.Visible;
+                    LoginLoadingIcon.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    var user = new { user_name = username, password = password };
+                    string json = JsonConvert.SerializeObject(user);
+                    ApiConnect apiString = new ApiConnect();
+                    using (var client = new HttpClient())
+                    {
+                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+                        var response = await client.PostAsync($"{apiString.Url}/auth/login", content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            string responseBody = await response.Content.ReadAsStringAsync();
+                            LoginRespon? responseData = JsonConvert.DeserializeObject<LoginRespon>(responseBody);
+                            DataRespon data = responseData?.data;
+
+                            if (data != null)
+                            {
+                                Console.WriteLine("Response from login");
+                                Console.WriteLine(JsonConvert.SerializeObject(data, Formatting.Indented));
+
+                                try
+                                {
+                                    // Tạo đối tượng người dùng mới từ dữ liệu đăng nhập
+                                    var User = new User
+                                    {
+                                        UserName = data.user_name,
+                                        AccessToken = data.access_token,
+                                        Name = data.name,
+                                        UserId = data.user_id,
+                                        Permission = data.permision,
+                                        BranchId = data.branch_id
+                                    };
+
+                                    // Ẩn form đăng nhập và hiện nội dung Border chính
+                                    GetBills();
+                                    LoginFormBorder.Visibility = Visibility.Collapsed;
+                                    MainContentBorder.Visibility = Visibility.Visible;
+
+                                    LoginLoadingIcon.Visibility = Visibility.Collapsed;
+                                }
+                                catch (Exception dbEx)
+                                {
+                                    Console.WriteLine($"Error saving user: {dbEx.Message}");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ErrorMessageTextBlock.Text = "Invalid username or password.";
+                            ErrorMessageTextBlock.Visibility = Visibility.Visible;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during login: {ex.Message}");
+            }
+            finally
+            {
+                LoginLoadingIcon.Visibility = Visibility.Collapsed;
+            }
         }
     }
 }

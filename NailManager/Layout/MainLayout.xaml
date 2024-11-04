@@ -137,21 +137,21 @@
                 Margin="0,0,0,0"
                 Width="140"
                 x:Name="LogoSvg" />
-            <Button
-                Click="NavigateBtnClick"
-                Content="New Order"
-                FontSize="24"
-                Grid.Column="1"
-                Margin="5,0,0,0"
-                Style="{StaticResource SelectedButtonStyle}"
-                Tag="New" />
-            <Button
-                Click="NavigateBtnClick"
-                Content="Process Order"
-                FontSize="24"
-                Grid.Column="3"
-                Style="{StaticResource UnselectedButtonStyle}"
-                Tag="Process" />
+            <!--  <Button  -->
+            <!--  Click="NavigateBtnClick"  -->
+            <!--  Content="New Order"  -->
+            <!--  FontSize="24"  -->
+            <!--  Grid.Column="1"  -->
+            <!--  Margin="5,0,0,0"  -->
+            <!--  Style="{StaticResource SelectedButtonStyle}"  -->
+            <!--  Tag="New" />  -->
+            <!--  <Button  -->
+            <!--  Click="NavigateBtnClick"  -->
+            <!--  Content="Process Order"  -->
+            <!--  FontSize="24"  -->
+            <!--  Grid.Column="3"  -->
+            <!--  Style="{StaticResource UnselectedButtonStyle}"  -->
+            <!--  Tag="Process" />  -->
             <!--  <Button  -->
             <!--  Click="NavigateBtnClick"  -->
             <!--  Content="Admin"  -->
@@ -201,11 +201,25 @@
                 <!--  Tag="Home" />  -->
                 <Button
                     Click="NavigateBtnClick"
-                    Content="Products"
+                    Content="New Order"
+                    FontSize="24"
+                    Margin="0,20,0,0"
+                    Style="{StaticResource SelectedButtonStyle}"
+                    Tag="New" />
+                <Button
+                    Click="NavigateBtnClick"
+                    Content="Revenue"
                     FontSize="24"
                     Margin="0,20,0,0"
                     Style="{StaticResource UnselectedButtonStyle}"
-                    Tag="Products" />
+                    Tag="Process" />
+                <!--  <Button  -->
+                <!--  Click="NavigateBtnClick"  -->
+                <!--  Content="Products"  -->
+                <!--  FontSize="24"  -->
+                <!--  Margin="0,20,0,0"  -->
+                <!--  Style="{StaticResource UnselectedButtonStyle}"  -->
+                <!--  Tag="Products" />  -->
                 <!--  <Button  -->
                 <!--  Click="NavigateBtnClick"  -->
                 <!--  Content="Services"  -->

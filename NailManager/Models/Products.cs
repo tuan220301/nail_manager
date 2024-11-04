@@ -8,6 +8,7 @@ public class Product : INotifyPropertyChanged
     public int product_id { get; set; }
     public string product_name { get; set; }
     public double price { get; set; }
+    public double fee { get;set; }
     public int branch_id { get; set; }
     public int Quantity { get; set; }
     public string url_image { get; set; } 

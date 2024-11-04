@@ -100,6 +100,22 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Background" Value="{StaticResource WhiteBrush}" />
         </Style>
+        <!--  Button Style with CornerRadius  -->
+        <Style TargetType="Button" x:Key="ButtonSearch">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            CornerRadius="20"
+                            Height="45">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <SolidColorBrush Color="#888" x:Key="StandardBorderBrush" />
         <SolidColorBrush Color="Black" x:Key="StandardBackgroundBrush" />
@@ -492,7 +508,8 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="250" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="150" />
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         DockPanel.Dock="Top"
@@ -501,26 +518,19 @@
                         Grid.Column="0"
                         Margin="0,10,0,10"
                         Text="Menu" />
-                    <Border
-                        BorderBrush="Gray"
-                        Grid.Column="1"
-                        Height="50"
-                        Margin="10,0,0,0"
-                        x:Name="FilterBranch">
-                        <ComboBox
-                            DisplayMemberPath="name"
-                            FontSize="18"
-                            SelectedValuePath="branch_id"
-                            SelectionChanged="BranchComboBox_SelectionChanged"
-                            Style="{StaticResource RoundComboBox}"
-                            VerticalAlignment="Center"
-                            Width="200"
-                            x:Name="BranchComboBox" />
-                    </Border>
+                    <Button
+                        Background="{DynamicResource BillOrangeColorBrush}"
+                        Click="OnSubmit"
+                        FontSize="20"
+                        Foreground="white"
+                        Grid.Column="2"
+                        Style="{DynamicResource ButtonSearch}">
+                        Submit
+                    </Button>
                 </Grid>
                 <Grid>
                     <StackPanel>
-                        <StackPanel HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
                             <Border
                                 Background="#FFF8F0"
                                 BorderBrush="#E4E4E7"
@@ -532,41 +542,75 @@
                                 Width="350">
                                 <StackPanel Orientation="Horizontal">
                                     <!--  Image Frame  -->
-                                    <StackPanel Width="270">
+                                    <StackPanel Width="330">
                                         <TextBlock
                                             FontFamily="Inter"
                                             FontSize="18"
                                             FontWeight="SemiBold"
                                             Foreground="#392F5A"
-                                            Text="Other service" />
+                                            Text="Price" />
+                                        <TextBox
+                                            FontSize="16"
+                                            Margin="0,10,0,0"
+                                            Style="{StaticResource CurrencyInput}"
+                                            x:Name="OrderServiceTextBox" />
+                                    </StackPanel>
+                                    <!--  Caption Frame  -->
+                                </StackPanel>
+                            </Border>
+                            <Border
+                                Background="#FFF8F0"
+                                BorderBrush="#E4E4E7"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Height="100"
+                                Margin="10"
+                                Padding="5"
+                                Width="350">
+                                <StackPanel Orientation="Horizontal">
+                                    <!--  Image Frame  -->
+                                    <StackPanel Width="330">
+                                        <TextBlock
+                                            FontFamily="Inter"
+                                            FontSize="18"
+                                            FontWeight="SemiBold"
+                                            Foreground="#392F5A"
+                                            Text="Employee" />
+                                        <!-- <TextBlock>Employee</TextBlock> -->
+                                        <ComboBox
+                                            FontSize="16"
+                                            Margin="0,20,0,10"
+                                            Style="{StaticResource RoundComboBox}"
+                                            x:Name="StaffComboBox" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <Border
+                                Background="#FFF8F0"
+                                BorderBrush="#E4E4E7"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Height="100"
+                                Margin="10"
+                                Padding="5"
+                                Width="350">
+                                <StackPanel Orientation="Horizontal">
+                                    <!--  Image Frame  -->
+                                    <StackPanel Width="330">
+                                        <TextBlock
+                                            FontFamily="Inter"
+                                            FontSize="18"
+                                            FontWeight="SemiBold"
+                                            Foreground="#392F5A"
+                                            Text="Service Fee" />
                                         <TextBox
                                             FontSize="16"
                                             Margin="0,10,0,0"
                                             Style="{StaticResource CurrencyInput}"
                                             Text=""
-                                            x:Name="OrderServiceTextBox" />
+                                            x:Name="ServiceFee" />
                                     </StackPanel>
                                     <!--  Caption Frame  -->
-                                    <StackPanel
-                                        Height="80"
-                                        Orientation="Vertical"
-                                        Width="60">
-                                        <StackPanel
-                                            HorizontalAlignment="Stretch"
-                                            Margin="0,12,0,0"
-                                            VerticalAlignment="Center">
-                                            <Border Height="20" />
-                                            <Button Click="OnAddOtherService" Style="{StaticResource IconButtonStyle}">
-                                                <Button.Content>
-                                                    <faWpf:ImageAwesome
-                                                        Foreground="#FFF8F0"
-                                                        Height="20"
-                                                        Icon="Plus"
-                                                        Width="20" />
-                                                </Button.Content>
-                                            </Button>
-                                        </StackPanel>
-                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -655,27 +699,27 @@
                                                                 VerticalAlignment="Center" />
                                                         </StackPanel>
                                                         <!--  Plus Button  -->
-                                                        <Button Click="OnAddItemClick" Style="{StaticResource IconButtonStyle}">
-                                                            <Button.Content>
-                                                                <faWpf:ImageAwesome
-                                                                    Foreground="#FFF8F0"
-                                                                    Height="20"
-                                                                    Width="20">
-                                                                    <faWpf:ImageAwesome.Style>
-                                                                        <Style TargetType="{x:Type faWpf:ImageAwesome}">
-                                                                            <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding IsChecked}" Value="True">
-                                                                                    <Setter Property="Icon" Value="Check" />
-                                                                                </DataTrigger>
-                                                                                <DataTrigger Binding="{Binding IsChecked}" Value="False">
-                                                                                    <Setter Property="Icon" Value="Plus" />
-                                                                                </DataTrigger>
-                                                                            </Style.Triggers>
-                                                                        </Style>
-                                                                    </faWpf:ImageAwesome.Style>
-                                                                </faWpf:ImageAwesome>
-                                                            </Button.Content>
-                                                        </Button>
+                                                        <!-- <Button Click="OnAddItemClick" Style="{StaticResource IconButtonStyle}"> -->
+                                                        <!--     <Button.Content> -->
+                                                        <!--  <faWpf:ImageAwesome  -->
+                                                        <!--  Foreground="#FFF8F0"  -->
+                                                        <!--  Height="20"  -->
+                                                        <!--  Width="20">  -->
+                                                        <!--             <faWpf:ImageAwesome.Style> -->
+                                                        <!--                 <Style TargetType="{x:Type faWpf:ImageAwesome}"> -->
+                                                        <!--                     <Style.Triggers> -->
+                                                        <!--                         <DataTrigger Binding="{Binding IsChecked}" Value="True"> -->
+                                                        <!--                             <Setter Property="Icon" Value="Check" /> -->
+                                                        <!--                         </DataTrigger> -->
+                                                        <!--                         <DataTrigger Binding="{Binding IsChecked}" Value="False"> -->
+                                                        <!--                             <Setter Property="Icon" Value="Plus" /> -->
+                                                        <!--                         </DataTrigger> -->
+                                                        <!--                     </Style.Triggers> -->
+                                                        <!--                 </Style> -->
+                                                        <!--             </faWpf:ImageAwesome.Style> -->
+                                                        <!--         </faWpf:ImageAwesome> -->
+                                                        <!--     </Button.Content> -->
+                                                        <!-- </Button> -->
                                                     </StackPanel>
                                                 </StackPanel>
                                             </StackPanel>
@@ -735,29 +779,20 @@
                     Style="{StaticResource NormalInput}"
                     Text=""
                     x:Name="PhoneNumberTextBox" />
-                <TextBlock>Employee</TextBlock>
-                <ComboBox
-                    FontSize="16"
-                    Margin="0,0,0,10"
-                    Style="{StaticResource RoundComboBox}"
-                    x:Name="StaffComboBox" />
-                <TextBlock>Payment</TextBlock>
-                <ComboBox
-                    FontSize="16"
-                    Margin="0,0,0,10"
-                    SelectedIndex="0"
-                    Style="{StaticResource RoundComboBox}"
-                    x:Name="PaymentMethod">
-                    <ComboBoxItem Content="Cash" Tag="1" />
-                    <ComboBoxItem Content="Credit" Tag="2" />
-                </ComboBox>
+                <!-- <TextBlock>Employee</TextBlock> -->
+                <!--  <ComboBox  -->
+                <!--  FontSize="16"  -->
+                <!--  Margin="0,0,0,10"  -->
+                <!--  Style="{StaticResource RoundComboBox}"  -->
+                <!--  x:Name="StaffComboBox" />  -->
+
                 <TextBlock
                     FontSize="18"
                     FontWeight="Bold"
                     Margin="0,10,0,5"
                     Text="Order #id" />
 
-                <ScrollViewer Height="350" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer Height="470" VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding SelectedItems}" x:Name="SelectedItemsControl">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -771,7 +806,11 @@
                                     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center">
                                         <Grid.ColumnDefinitions>
                                             <!--  name  -->
-                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="80" />
                                             <!--  space  -->
                                             <ColumnDefinition Width="*" />
                                             <!--  remove  -->
@@ -779,32 +818,45 @@
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="50" />
-                                            <!-- <RowDefinition Height="20" /> -->
-                                            <!-- <RowDefinition Height="30" /> -->
                                         </Grid.RowDefinitions>
-                                        <TextBlock
-                                            FontSize="18"
-                                            FontWeight="Bold"
-                                            Grid.Column="0"
-                                            Grid.Row="0"
-                                            Text="{Binding product_name}"
-                                            VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="0" Grid.Row="0">
+                                            <TextBlock>Employee</TextBlock>
+                                            <TextBlock
+                                                FontSize="18"
+                                                FontWeight="Bold"
+                                                Text="{Binding user_name}"
+                                                VerticalAlignment="Center" />
+                                        </StackPanel>
 
-                                        <TextBlock
-                                            FontSize="18"
-                                            FontWeight="Bold"
-                                            Foreground="Green"
-                                            Grid.Column="1"
-                                            Grid.Row="0"
-                                            Margin="10,0,0,0"
-                                            VerticalAlignment="Center">
-                                            <TextBlock.Text>
-                                                <Binding Path="price" StringFormat="{}{0} $" />
-                                            </TextBlock.Text>
-                                        </TextBlock>
+                                        <StackPanel Grid.Column="2" Grid.Row="0">
+                                            <TextBlock>Price</TextBlock>
+                                            <TextBlock
+                                                FontSize="18"
+                                                FontWeight="Bold"
+                                                Foreground="Green"
+                                                Margin="10,0,0,0"
+                                                VerticalAlignment="Center">
+                                                <TextBlock.Text>
+                                                    <Binding Path="other_price" StringFormat="{}{0} $" />
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="4" Grid.Row="0">
+                                            <TextBlock>Service Fee</TextBlock>
+                                            <TextBlock
+                                                FontSize="18"
+                                                FontWeight="Bold"
+                                                Foreground="Green"
+                                                Margin="10,0,0,0"
+                                                VerticalAlignment="Center">
+                                                <TextBlock.Text>
+                                                    <Binding Path="service_fee" StringFormat="{}{0} $" />
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </StackPanel>
                                         <Button
                                             Click="OnRemoveItemClick"
-                                            Grid.Column="2"
+                                            Grid.Column="6"
                                             Height="30"
                                             Style="{StaticResource IconButtonStyle}"
                                             Width="30">

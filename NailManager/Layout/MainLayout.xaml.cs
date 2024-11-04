@@ -50,7 +50,7 @@ namespace NailManager.Layout
                 Console.WriteLine("user name: " + user.Name);
                 userName.Text = user.Name;
                 permision = user.Permission;
-                CheckPermissionsAndShowMenu(permision);
+                // CheckPermissionsAndShowMenu(permision);
                 ShowLoading(false);
             }
             

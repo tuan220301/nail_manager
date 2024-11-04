@@ -16,3 +16,9 @@ public class ApiResponse
     public string message { get; set; }
     public object data { get; set; }
 }
+
+public class APIResponFromCancelBill
+{
+    public int status { get; set; }
+    public string message { get; set; }
+}

@@ -25,19 +25,23 @@ public partial class TabBillCreate : UserControl
 {
     public ICollectionView FilteredProducts { get; set; }
     public ObservableCollection<Product> Products { get; set; }
-    public ObservableCollection<Product> SelectedItems { get; set; }
+    public ObservableCollection<ListService> SelectedItems { get; set; }
     public ObservableCollection<UserFromListApi> Users { get; set; }
     private WpfSvgWindow _wpfWindow;
+
     public int BranchId { get; set; }
+
+    // public Branch CurrentBranch { get; set; }
     private bool _isInitialized = false;
     private Branch currentBranch;
     private string bill_id_string;
+
     public TabBillCreate()
     {
         InitializeComponent();
         Products = new ObservableCollection<Product>();
         FilteredProducts = CollectionViewSource.GetDefaultView(Products);
-        SelectedItems = new ObservableCollection<Product>();
+        SelectedItems = new ObservableCollection<ListService>();
         Users = new ObservableCollection<UserFromListApi>();
 
         var wpfSettings = new WpfDrawingSettings();
@@ -46,30 +50,21 @@ public partial class TabBillCreate : UserControl
 
         DataContext = this;
         GetUser();
-        GetBrandList();
+        // GetBrandList();
     }
 
     private async void GetUser()
     {
         ShowLoading(true);
         var user = await DatabaseHelper.GetUserAsync();
-        if (user != null)
-        {
-            BranchId = user.BranchId > 0 ? user.BranchId : 1; // Đặt BranchId là 1 nếu admin
-            FilterBranch.Visibility = user.BranchId > 0 ? Visibility.Collapsed : Visibility.Visible;
-
-            // Thiết lập giá trị mặc định cho ComboBox, điều này sẽ kích hoạt SelectionChanged nếu không ngăn chặn
-            BranchComboBox.SelectedValue = BranchId;
-
-            _isInitialized = true; // Đánh dấu là đã khởi tạo xong
-            GetListProduct(BranchId); // Gọi API lần đầu tiên với BranchId đã thiết lập
-            GetStaffList(BranchId); // Lấy danh sách nhân viên
-
-            ShowLoading(false);
-        }
+        BranchId = user.BranchId;
+        GetListProduct(user.BranchId); // Gọi API lần đầu tiên với BranchId đã thiết lập
+        GetStaffList(user.BranchId); // Lấy danh sách nhân viên
+        GetBrandList(user.BranchId);
+        ShowLoading(false);
     }
 
-    private async void GetBrandList()
+    private async void GetBrandList(int user_branch_id)
     {
         ShowLoading(true); // Hiển thị loading
         string url = "/branch/list";
@@ -85,13 +80,9 @@ public partial class TabBillCreate : UserControl
                 // Console.WriteLine("responseData: " + Utls.FormatJsonString(responseBody));
                 if (responseData != null && responseData.status == 200)
                 {
-                    Dispatcher.Invoke(() =>
-                    {
-                        BranchComboBox.ItemsSource = responseData.data;
-                        BranchComboBox.DisplayMemberPath = "name";
-                        BranchComboBox.SelectedValuePath = "branch_id";
-                        BranchComboBox.SelectedValue = 1; // Đặt giá trị mặc định là branch_id = 1
-                    });
+                    var listBranch = responseData.data;
+                    var filterBranch = listBranch.Find(branch => branch.branch_id == user_branch_id);
+                    currentBranch = filterBranch;
                 }
                 else
                 {
@@ -151,7 +142,7 @@ public partial class TabBillCreate : UserControl
                     }
 
                     StaffComboBox.ItemsSource = Users;
-                    StaffComboBox.DisplayMemberPath = "user_name";
+                    StaffComboBox.DisplayMemberPath = "name";
                     StaffComboBox.SelectedValuePath = "user_id";
 
                     // Đặt giá trị mặc định cho ComboBox
@@ -230,53 +221,53 @@ public partial class TabBillCreate : UserControl
         });
     }
 
-    private void BranchComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_isInitialized && BranchComboBox.SelectedValue != null)
-        {
-            int selectedBranchId = (int)BranchComboBox.SelectedValue;
-            currentBranch = BranchComboBox.SelectedItem as Branch;
+    // private void BranchComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    // {
+    //     if (_isInitialized && BranchComboBox.SelectedValue != null)
+    //     {
+    //         int selectedBranchId = (int)BranchComboBox.SelectedValue;
+    //         currentBranch = BranchComboBox.SelectedItem as Branch;
+    //
+    //         GetListProduct(selectedBranchId); // Gọi lại với branch_id mới
+    //         GetStaffList(selectedBranchId); // Lấy danh sách nhân viên của chi nhánh đã chọn
+    //     }
+    // }
 
-            GetListProduct(selectedBranchId); // Gọi lại với branch_id mới
-            GetStaffList(selectedBranchId); // Lấy danh sách nhân viên của chi nhánh đã chọn
-        }
-    }
+    // private void OnAddItemClick(object sender, RoutedEventArgs e)
+    // {
+    //     var button = sender as Button;
+    //     var selectedItem = button?.DataContext as Product;
+    //
+    //     if (selectedItem != null)
+    //     {
+    //         // Kiểm tra xem sản phẩm đã tồn tại trong danh sách SelectedItems chưa
+    //         var existingItem = SelectedItems.FirstOrDefault(item => item.product_id == selectedItem.product_id);
+    //
+    //         if (existingItem == null) // Nếu sản phẩm chưa có trong danh sách
+    //         {
+    //             // Truncate product_name nếu vượt quá 15 ký tự
+    //             string truncatedName = TruncateString(selectedItem.product_name, 25);
+    //             selectedItem.product_name = truncatedName;
+    //
+    //             selectedItem.Quantity = 1; // Số lượng mặc định là 1
+    //             SelectedItems.Add(selectedItem); // Thêm sản phẩm vào danh sách
+    //         }
+    //         // Nếu sản phẩm đã tồn tại, không thêm và không tăng số lượng
+    //
+    //         TotalPriceChanged();
+    //         RefreshSelectedItems();
+    //         UpdateProductSelectionState();
+    //     }
+    // }
 
-    private void OnAddItemClick(object sender, RoutedEventArgs e)
-    {
-        var button = sender as Button;
-        var selectedItem = button?.DataContext as Product;
-
-        if (selectedItem != null)
-        {
-            // Kiểm tra xem sản phẩm đã tồn tại trong danh sách SelectedItems chưa
-            var existingItem = SelectedItems.FirstOrDefault(item => item.product_id == selectedItem.product_id);
-
-            if (existingItem == null) // Nếu sản phẩm chưa có trong danh sách
-            {
-                // Truncate product_name nếu vượt quá 15 ký tự
-                string truncatedName = TruncateString(selectedItem.product_name, 25);
-                selectedItem.product_name = truncatedName;
-
-                selectedItem.Quantity = 1; // Số lượng mặc định là 1
-                SelectedItems.Add(selectedItem); // Thêm sản phẩm vào danh sách
-            }
-            // Nếu sản phẩm đã tồn tại, không thêm và không tăng số lượng
-
-            TotalPriceChanged();
-            RefreshSelectedItems();
-            UpdateProductSelectionState();
-        }
-    }
-
-    private void UpdateProductSelectionState()
-    {
-        foreach (var product in Products)
-        {
-            // Kiểm tra nếu sản phẩm có trong danh sách SelectedItems
-            product.IsChecked = SelectedItems.Any(item => item.product_id == product.product_id);
-        }
-    }
+    // private void UpdateProductSelectionState()
+    // {
+    //     foreach (var product in Products)
+    //     {
+    //         // Kiểm tra nếu sản phẩm có trong danh sách SelectedItems
+    //         product.IsChecked = SelectedItems.Any(item => item.product_id == product.product_id);
+    //     }
+    // }
 
     private string TruncateString(string value, int maxLength)
     {
@@ -287,22 +278,18 @@ public partial class TabBillCreate : UserControl
     private void OnRemoveItemClick(object sender, RoutedEventArgs e)
     {
         var button = sender as Button;
-        var selectedItem = button?.DataContext as Product;
+        var selectedItem = button?.DataContext as ListService;
         if (selectedItem != null)
         {
-            var existingItem = SelectedItems.FirstOrDefault(item => item.product_name == selectedItem.product_name);
+            var existingItem = SelectedItems.FirstOrDefault(item => item.user_id == selectedItem.user_id);
             if (existingItem != null)
             {
-                existingItem.Quantity--;
-                if (existingItem.Quantity == 0)
-                {
-                    SelectedItems.Remove(existingItem);
-                }
+                SelectedItems.Remove(existingItem);
             }
 
             TotalPriceChanged();
             RefreshSelectedItems();
-            UpdateProductSelectionState();
+            // UpdateProductSelectionState();
         }
     }
 
@@ -320,7 +307,7 @@ public partial class TabBillCreate : UserControl
         double total = 0.0;
         foreach (var item in SelectedItems)
         {
-            total += (double)item.price * item.Quantity;
+            total += (double)item.other_price + item.service_fee;
         }
 
         TotalPrice.Text = total.ToString("F2") + " $"; // Định dạng số thành chuỗi có 2 chữ số thập phân
@@ -350,17 +337,15 @@ public partial class TabBillCreate : UserControl
         }
     }
 
-    private FlowDocument CreateBillDocument()
+    private FlowDocument CreateBillDocument(string billID)
     {
-        string customerName = CustomerNameTextBox.Text;
-        string phoneNumber = PhoneNumberTextBox.Text;
-        var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;
-        string staff = selectedUser?.user_name;
-        var selectedItems = SelectedItemsControl.ItemsSource as ObservableCollection<Product>;
-        string totalPriceText = TotalPrice.Text.Replace("$", "").Trim();
+        string customerName = CustomerNameTextBox?.Text ?? string.Empty;
+        string phoneNumber = PhoneNumberTextBox?.Text ?? string.Empty;
+        var selectedUser = StaffComboBox?.SelectedItem as UserFromListApi;
+        string staff = selectedUser?.user_name ?? "Unknown";
+        var selectedItems = SelectedItems ?? new ObservableCollection<ListService>(); // Sử dụng trực tiếp SelectedItems
+        string totalPriceText = TotalPrice?.Text.Replace("$", "").Trim() ?? "0";
         double totalPrice = string.IsNullOrWhiteSpace(totalPriceText) ? 0 : double.Parse(totalPriceText);
-        var selectedPaymentMethod = PaymentMethod.SelectedItem as ComboBoxItem;
-        string paymentMethod = selectedPaymentMethod != null ? selectedPaymentMethod.Content.ToString() : "Unknown";
 
         FlowDocument document = new FlowDocument
         {
@@ -385,116 +370,101 @@ public partial class TabBillCreate : UserControl
             BlockUIContainer imageContainer = new BlockUIContainer(svgImage);
             document.Blocks.Add(imageContainer);
         }
-        Paragraph name =
-            new Paragraph(new Run(
-                currentBranch.name))
-            {
-                FontSize = 10,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Roboto"),
-            };
-        document.Blocks.Add(name);
-        Paragraph desc =
-            new Paragraph(new Run(
-                currentBranch.description))
-            {
-                FontSize = 10,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Roboto"),
-            };
-        document.Blocks.Add(desc);
-        Paragraph website =
-            new Paragraph(new Run(
-                currentBranch.website))
-            {
-                FontSize = 10,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Roboto"),
-            };
-        document.Blocks.Add(website);
+
+
+        document.Blocks.Add(new Paragraph(new Run(currentBranch.name))
+        {
+            FontSize = 10,
+            TextAlignment = TextAlignment.Center,
+            FontFamily = new FontFamily("Roboto"),
+        });
+        document.Blocks.Add(new Paragraph(new Run(currentBranch.description))
+        {
+            FontSize = 10,
+            TextAlignment = TextAlignment.Center,
+            FontFamily = new FontFamily("Roboto"),
+        });
+        document.Blocks.Add(new Paragraph(new Run(currentBranch.website))
+        {
+            FontSize = 10,
+            TextAlignment = TextAlignment.Center,
+            FontFamily = new FontFamily("Roboto"),
+        });
+
         // Title
-        Paragraph title = new Paragraph(new Run("Bill Invoice (PROCESSING)"))
+        document.Blocks.Add(new Paragraph(new Run("Bill"))
         {
             FontSize = 16,
             FontWeight = FontWeights.Bold,
             TextAlignment = TextAlignment.Center,
             FontFamily = new FontFamily("Roboto"),
-        };
-        document.Blocks.Add(title);
+        });
+
+        document.Blocks.Add(new Paragraph(new Run($"Customer: {customerName}\nPhone number: {phoneNumber}"))
+        {
+            FontSize = 12,
+            TextAlignment = TextAlignment.Left,
+            FontFamily = new FontFamily("Roboto"),
+        });
 
         // Bill Info
-        Paragraph billInfo =
+        string billIdString = billID ?? "Unknown"; // Ensure bill_id_string is not null
+        document.Blocks.Add(
             new Paragraph(new Run(
-                $"Bill ID: #{bill_id_string}\nStaff: {staff}\nPayment method: {paymentMethod}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
+                $"Bill ID: #{billIdString}\nStaff: {staff}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
             {
                 FontSize = 12,
                 TextAlignment = TextAlignment.Left,
                 FontFamily = new FontFamily("Roboto"),
-            };
-        document.Blocks.Add(billInfo);
+            });
 
         // Table Header
-        document.Blocks.Add(CreateHeaderRow(new[] { "NO", "Name", "Price" }));
+        document.Blocks.Add(CreateHeaderRow(new[] { "Employee", "Price", "Fee", "Total" }));
 
-        // Table Rows
-        int index = 1;
+        // Table Rows for Selected Items
         foreach (var item in selectedItems)
         {
-            double price = (double)item.price;
-            double total = price * item.Quantity;
-            string formattedPrice = price % 1 == 0 ? price.ToString("N0") : price.ToString("N2");
-
             document.Blocks.Add(CreateLineRow(new[]
             {
-                index.ToString(),
-                item.product_name,
-                formattedPrice,
+                item.user_name,
+                item.other_price.ToString("N2"),
+                item.service_fee.ToString("N2"),
+                (item.other_price + item.service_fee).ToString("N2"),
             }));
-            index++;
         }
 
         // Total
-        Paragraph totalParagraph = new Paragraph(new Run($"\nTotal: {totalPrice:N0} $"))
+        document.Blocks.Add(new Paragraph(new Run($"\nTotal: {totalPrice} $"))
         {
             FontSize = 14,
             FontWeight = FontWeights.Bold,
             TextAlignment = TextAlignment.Right,
             FontFamily = new FontFamily("Roboto"),
-        };
-        document.Blocks.Add(totalParagraph);
+        });
 
-        // Store Info
-       
-        Paragraph address =
-            new Paragraph(new Run(
-                currentBranch.address))
-            {
-                FontSize = 10,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Roboto"),
-            };
-        document.Blocks.Add(address);
-        Paragraph phone =
-            new Paragraph(new Run(
-                currentBranch.sdt))
-            {
-                FontSize = 10,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Roboto"),
-            };
-        document.Blocks.Add(phone);
-       
-        Paragraph time =
-            new Paragraph(new Run(
-                currentBranch.open_close))
-            {
-                FontSize = 10,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Roboto"),
-            };
-        document.Blocks.Add(time);
+
+        document.Blocks.Add(new Paragraph(new Run(currentBranch.address))
+        {
+            FontSize = 10,
+            TextAlignment = TextAlignment.Center,
+            FontFamily = new FontFamily("Roboto"),
+        });
+        document.Blocks.Add(new Paragraph(new Run(currentBranch.sdt))
+        {
+            FontSize = 10,
+            TextAlignment = TextAlignment.Center,
+            FontFamily = new FontFamily("Roboto"),
+        });
+        document.Blocks.Add(new Paragraph(new Run(currentBranch.open_close))
+        {
+            FontSize = 10,
+            TextAlignment = TextAlignment.Center,
+            FontFamily = new FontFamily("Roboto"),
+        });
+
         return document;
     }
+
 
     private BlockUIContainer CreateHeaderRow(string[] columns)
     {
@@ -508,8 +478,9 @@ public partial class TabBillCreate : UserControl
 
         Grid grid = new Grid();
 
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(25) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
 
         for (int i = 0; i < columns.Length; i++)
@@ -558,8 +529,9 @@ public partial class TabBillCreate : UserControl
 
         Grid grid = new Grid();
 
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(25) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
 
         for (int i = 0; i < columns.Length; i++)
@@ -617,7 +589,6 @@ public partial class TabBillCreate : UserControl
         if (string.IsNullOrWhiteSpace(CustomerNameTextBox.Text) ||
             string.IsNullOrWhiteSpace(PhoneNumberTextBox.Text) ||
             StaffComboBox.SelectedItem == null ||
-            PaymentMethod.SelectedItem == null || // Kiểm tra giá trị của ComboBox PaymentMethod
             !SelectedItems.Any())
         {
             MessageBox.Show("Please fill full information.", "Error",
@@ -633,76 +604,44 @@ public partial class TabBillCreate : UserControl
             string customerPhone = PhoneNumberTextBox.Text;
 
             // Lấy thông tin nhân viên từ ComboBox
-            var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;
-            int userId = selectedUser?.user_id ?? 0;
-            string branchId = BranchComboBox.SelectedValue.ToString();
-
-            // Lấy giá trị phương thức thanh toán từ ComboBox, xử lý nếu null
-            int paymentMethod = PaymentMethod.SelectedItem != null
-                ? int.Parse(((ComboBoxItem)PaymentMethod.SelectedItem).Tag.ToString())
-                : 0; // Hoặc giá trị mặc định, cần xử lý theo logic của bạn
-
-            // Kiểm tra lại nếu paymentMethod là 0
-            if (paymentMethod == 0)
-            {
-                MessageBox.Show("Vui lòng chọn phương thức thanh toán.", "Thiếu thông tin", MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-                return;
-            }
+            // var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;
+            // int userId = selectedUser?.user_id ?? 0;
 
             // Lấy giá trị từ OrderServiceTextBox, nếu rỗng thì mặc định là 0
             string otherPriceText = OrderServiceTextBox.Text;
-            double otherPrice = string.IsNullOrWhiteSpace(otherPriceText) ? 0 : double.Parse(otherPriceText);
 
             // Danh sách sản phẩm được chọn
-            var productIds = SelectedItems.Select(item => item.product_id).ToList();
+            var service = SelectedItems;
 
-            // Xây dựng các tham số dưới dạng Dictionary<string, string>
-            var parameters = new Dictionary<string, string>
+            // Chuẩn bị parameters dưới dạng JSON string
+            var parameters = new Dictionary<string, object>
             {
                 { "customer_name", customerName },
                 { "customer_phone", customerPhone },
-                { "branch_id", branchId },
-                { "user_id", userId.ToString() },
-                { "discount", "0" },
-                { "pay_method", paymentMethod.ToString() },
-                { "other_price", otherPrice.ToString() } // Thêm other_price
+                { "branch_id", BranchId.ToString() },
+                { "service", service },
             };
 
-            // Thêm các productIds vào parameters với tên động
-            for (int i = 0; i < productIds.Count; i++)
-            {
-                if (productIds[i] != 0)
-                {
-                    parameters.Add($"products[{i}]", productIds[i].ToString());
-                }
-            }
-
-            // In chuỗi JSON ra để kiểm tra
-            Console.WriteLine("Parameters:");
-            foreach (var param in parameters)
-            {
-                Console.WriteLine($"{param.Key}: {param.Value}");
-            }
+            string jsonParameters = JsonConvert.SerializeObject(parameters); // Chuyển đổi sang chuỗi JSON
 
             // Đường dẫn API
             var apiService = new Api();
             string apiUrl = "/bill/create"; // Thay bằng endpoint thực tế của bạn
 
             // Gọi PostApiAsync để gửi yêu cầu
-            await apiService.PostApiAsync(apiUrl, parameters, (responseBody) =>
+            await apiService.PostApiAsync(apiUrl, jsonParameters, (responseBody) =>
             {
                 try
                 {
                     var responseData = JsonConvert.DeserializeObject<BranchApiResponse<BillResponseData>>(responseBody);
-            
+
                     if (responseData != null && responseData.status == 200)
                     {
-                        // Console.WriteLine("Create success");
-                        // Console.WriteLine(responseData.data.bill_id.ToString());
-                        bill_id_string = responseData.data.bill_id.ToString();
+                        Console.WriteLine("Create success");
+                        Console.WriteLine(responseData.data.bill_id.ToString());
+                        string billId = responseData.data.bill_id.ToString();
                         // Nếu lưu thành công, thực hiện in hóa đơn
-                        FlowDocument document = CreateBillDocument();
+                        FlowDocument document = CreateBillDocument(billId);
                         PrintBill(document);
                         ClearInputs();
                     }
@@ -759,34 +698,44 @@ public partial class TabBillCreate : UserControl
         RefreshSelectedItems();
     }
 
-    private void OnAddOtherService(object sender, RoutedEventArgs e)
+    private void OnSubmit(object sender, RoutedEventArgs e)
     {
         // Lấy giá trị từ TextBox (giá tiền cho dịch vụ)
         string inputPriceText = OrderServiceTextBox.Text;
-
+        var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;
+        string inputServiceFeeText = ServiceFee.Text;
         // Kiểm tra xem người dùng có nhập giá hợp lệ không
         if (double.TryParse(inputPriceText, out double servicePrice))
         {
             // Kiểm tra xem sản phẩm "Other service" đã tồn tại trong danh sách SelectedItems hay chưa
-            var existingService = SelectedItems.FirstOrDefault(item => item.product_name == "Other service");
+            var existingService = SelectedItems.FirstOrDefault(item => item.user_id == selectedUser.user_id);
 
             if (existingService != null)
             {
                 // Nếu sản phẩm đã tồn tại, cập nhật giá mới nhất
-                existingService.price = servicePrice;
+                existingService.other_price = double.Parse(inputPriceText);
+                existingService.service_fee = double.Parse(inputServiceFeeText);
             }
             else
             {
                 // Nếu chưa tồn tại, tạo sản phẩm mới với tên "Other service"
-                var newProduct = new Product
+                // var newProduct = new Product
+                // {
+                //     product_name = selectedUser.user_name, // Tên sản phẩm
+                //     price = servicePrice, // Giá tiền nhập vào
+                //     fee = double.Parse(inputServiceFeeText)
+                // };
+                var newService = new ListService
                 {
-                    product_name = "Other service", // Tên sản phẩm
-                    price = servicePrice, // Giá tiền nhập vào
-                    Quantity = 1 // Số lượng mặc định là 1
+                    product = [],
+                    user_id = selectedUser.user_id,
+                    user_name = selectedUser.name,
+                    other_price = servicePrice,
+                    service_fee = double.Parse(inputServiceFeeText)
                 };
 
                 // Thêm sản phẩm mới vào danh sách SelectedItems
-                SelectedItems.Add(newProduct);
+                SelectedItems.Add(newService);
             }
 
             // Cập nhật tổng tiền sau khi thêm/cập nhật sản phẩm
@@ -796,7 +745,7 @@ public partial class TabBillCreate : UserControl
             RefreshSelectedItems();
 
             // Cập nhật trạng thái chọn sản phẩm
-            UpdateProductSelectionState();
+            // UpdateProductSelectionState();
         }
         else
         {
