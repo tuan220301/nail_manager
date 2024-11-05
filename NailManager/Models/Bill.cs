@@ -42,7 +42,7 @@ namespace NailManager.Models
         public string customer_name { get; set; } = string.Empty;
         public string customer_phone { get; set; } = string.Empty;
         public int branch_id { get; set; } 
-        public int status { get; set; } 
+        public string status { get; set; } 
         public double price { get; set; } 
         public DateTime created_at { get; set; }
     }
@@ -77,6 +77,7 @@ namespace NailManager.Models
         public double total_price { get; set; }
         public double total_profit { get; set; }
         public double total_bill { get; set; }
+        public double total_service_fee { get; set; }
         
     }
     public class ListBillRespone
@@ -87,5 +88,6 @@ namespace NailManager.Models
         public string customer_phone { get; set; }
         public string status { get; set; }
         public double total_price { get; set; }
+        public DateTime created_at { get; set; }
     }
 }

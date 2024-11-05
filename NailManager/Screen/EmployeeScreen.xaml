@@ -800,15 +800,15 @@
                                             Margin="0,0,0,10">
                                             Detail
                                         </TextBlock>
-                                        <!--  <Button  -->
-                                        <!--  Background="{StaticResource BillOrangeColorBrush}"  -->
-                                        <!--  Click="OnSaveButtonClick"  -->
-                                        <!--  FontSize="20"  -->
-                                        <!--  Foreground="White"  -->
-                                        <!--  Grid.Column="2"  -->
-                                        <!--  x:Name="SaveButton">  -->
-                                        <!--  Save  -->
-                                        <!-- </Button> -->
+                                        <Button
+                                            Background="{StaticResource BillOrangeColorBrush}"
+                                            Click="OnSaveButtonClick"
+                                            FontSize="20"
+                                            Foreground="White"
+                                            Grid.Column="4"
+                                            x:Name="SaveButton">
+                                            Save
+                                        </Button>
                                         <Button
                                             Background="{StaticResource InfoBrush}"
                                             Click="PrintBillButton_Click"
@@ -850,6 +850,7 @@
                                             <TextBlock FontSize="20" Margin="0,0,0,10">User ID</TextBlock>
                                             <TextBox
                                                 FontSize="20"
+                                                IsEnabled="False"
                                                 Style="{DynamicResource NormalInput}"
                                                 x:Name="UserIDTextBox" />
                                         </StackPanel>
@@ -866,6 +867,7 @@
                                             <TextBlock FontSize="20" Margin="0,0,0,10">Rate</TextBlock>
                                             <TextBox
                                                 FontSize="20"
+                                                IsEnabled="False"
                                                 Style="{DynamicResource NormalInput}"
                                                 x:Name="RateTextBox" />
                                         </StackPanel>

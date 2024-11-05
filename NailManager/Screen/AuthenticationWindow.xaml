@@ -1,6 +1,11 @@
 <Window
-    d:DesignHeight="200"
-    d:DesignWidth="300"
+    Height="400"
+    KeyDown="SubmitKeyDown"
+    SizeToContent="Manual"
+    Width="500"
+    WindowStartupLocation="CenterOwner"
+    d:DesignHeight="400"
+    d:DesignWidth="500"
     mc:Ignorable="d"
     x:Class="NailManager.Screen.AuthenticationWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -118,59 +123,100 @@
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="Foreground" Value="White" />
         </Style>
-        <!--  Date picker  -->
-        <Style TargetType="{x:Type DatePicker}" x:Key="RoundedDatePickerStyle">
+        <!--  ComboBox Style  -->
+        <Style TargetType="{x:Type TextBox}" x:Key="ComboBoxTextBoxStyle">
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type DatePicker}">
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}" CornerRadius="20,0,0,20">
+                                <ScrollViewer x:Name="PART_ContentHost" />
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="{x:Type ToggleButton}" x:Key="ComboBoxButtonStyle">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <Border
+                            Background="White"
+                            CornerRadius="0,20,20,0"
+                            x:Name="border">
+                            <ContentPresenter />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="{x:Type ComboBox}" x:Key="RoundComboBox">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition MaxWidth="18" />
                             </Grid.ColumnDefinitions>
-                            <Border
-                                Background="White"
-                                BorderBrush="Gray"
-                                BorderThickness="1"
-                                CornerRadius="20"
-                                Grid.Column="0">
-                                <Grid>
-                                    <TextBox
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Height="40"
-                                        IsReadOnly="True"
-                                        Name="PART_TextBox"
-                                        Text="{Binding Path=SelectedDate, RelativeSource={RelativeSource TemplatedParent}, StringFormat='{}{0:MM/dd/yyyy}'}"
-                                        VerticalAlignment="Center" />
-                                    <Button
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        HorizontalAlignment="Right"
-                                        Margin="0,0,10,0"
-                                        Name="PART_Button"
-                                        VerticalAlignment="Center"
-                                        Width="20">
-                                        <faWpf:ImageAwesome Icon="Calendar" x:Name="TogglePasswordIcon" />
-                                    </Button>
-                                    <Popup
-                                        AllowsTransparency="True"
-                                        Focusable="False"
-                                        IsOpen="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Name="PART_Popup"
-                                        Placement="Bottom"
-                                        PlacementTarget="{Binding ElementName=PART_TextBox}"
-                                        PopupAnimation="Slide">
-                                        <Border
-                                            Background="White"
-                                            BorderBrush="Gray"
-                                            BorderThickness="1"
-                                            CornerRadius="10">
-                                            <Calendar Name="PART_Calendar" SelectedDate="{Binding Path=SelectedDate, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
-                                        </Border>
-                                    </Popup>
+                            <TextBox
+                                Height="{TemplateBinding Height}"
+                                Name="PART_EditableTextBox"
+                                Padding="5,0,0,0"
+                                Style="{StaticResource ComboBoxTextBoxStyle}" />
+                            <ToggleButton
+                                ClickMode="Press"
+                                Focusable="False"
+                                FontSize="50"
+                                Grid.Column="1"
+                                Height="{TemplateBinding Height}"
+                                IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                Margin="0"
+                                Style="{StaticResource ComboBoxButtonStyle}">
+                                <Path
+                                    Data="M 0 0 L 4 4 L 8 0 Z"
+                                    Fill="DodgerBlue"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                            </ToggleButton>
+                            <ContentPresenter
+                                Content="{TemplateBinding SelectionBoxItem}"
+                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                Grid.Column="0"
+                                HorizontalAlignment="Left"
+                                Margin="5,0,0,0"
+                                Name="ContentSite"
+                                VerticalAlignment="Center" />
+                            <Popup
+                                AllowsTransparency="True"
+                                Focusable="False"
+                                Grid.Column="0"
+                                IsOpen="{TemplateBinding IsDropDownOpen}"
+                                Name="Popup"
+                                Placement="Bottom"
+                                PopupAnimation="Slide">
+                                <Grid
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    MinWidth="{TemplateBinding ActualWidth}"
+                                    Name="DropDown"
+                                    SnapsToDevicePixels="True">
+                                    <Border
+                                        Background="Azure"
+                                        BorderBrush="Black"
+                                        BorderThickness="1"
+                                        CornerRadius="5"
+                                        x:Name="DropDownBorder" />
+                                    <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
                                 </Grid>
-                            </Border>
+                            </Popup>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -189,27 +235,56 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="5" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="5" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="5" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <!--  <TextBlock  -->
-        <!--  FontSize="16"  -->
-        <!--  Grid.Row="0"  -->
-        <!--  Margin="0,10,0,5"  -->
-        <!--  Text="Username:" />  -->
-        <!--  <TextBox  -->
-        <!--  FontSize="16"  -->
-        <!--  Grid.Row="2"  -->
-        <!--  Height="40"  -->
-        <!--  Padding="5"  -->
-        <!--  Style="{DynamicResource NormalInput}"  -->
-        <!--  x:Name="UsernameTextBox" />  -->
+        <TextBlock
+            FontSize="16"
+            Grid.Row="0"
+            Margin="0,10,0,5"
+            Text="Type:" />
+        <Border
+            BorderBrush="Gray"
+            BorderThickness="1"
+            CornerRadius="20"
+            Grid.Row="2"
+            Height="45px">
+            <ComboBox
+                FontSize="18"
+                SelectionChanged="PermissionComboBox_SelectionChanged"
+                Style="{StaticResource RoundComboBox}"
+                VerticalAlignment="Center"
+                Width="400"
+                x:Name="PermissionComboBox">
+                <ComboBoxItem Content="STAFF" />
+                <ComboBoxItem Content="Branch" />
+            </ComboBox>
+
+        </Border>
         <TextBlock
             FontSize="16"
             Grid.Row="4"
             Margin="0,10,0,5"
+            Text="Username:"
+            x:Name="UsernameTextBlock" />
+        <TextBox
+            FontSize="16"
+            Grid.Row="6"
+            Height="40"
+            Margin="0,0,0,0"
+            Padding="10,5,10,0"
+            Style="{StaticResource NormalInput}"
+            x:Name="UsernameGrid" />
+        <TextBlock
+            FontSize="16"
+            Grid.Row="8"
+            Margin="0,10,0,5"
             Text="Password:" />
         <Grid
             Background="{StaticResource WhiteBrush}"
-            Grid.Row="6"
+            Grid.Row="10"
             Height="40"
             Margin="0,0,0,10"
             VerticalAlignment="Center"
@@ -250,11 +325,11 @@
 
         <Button
             Background="{StaticResource BillOrangeColorBrush}"
-            Click="SubmitButton_Click"
-            Content="Submit"
+            Click="Submit"
+            Content="Login"
             FontSize="16"
             Foreground="White"
-            Grid.Row="8"
+            Grid.Row="12"
             Margin="0,10,0,0" />
     </Grid>
 </Window>

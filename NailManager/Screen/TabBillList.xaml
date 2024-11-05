@@ -1217,6 +1217,8 @@
                                         <ColumnDefinition Width="300" />
                                         <ColumnDefinition Width="10" />
                                         <ColumnDefinition Width="250" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="250" />
                                     </Grid.ColumnDefinitions>
                                     <Border Grid.Column="0">
                                         <Grid>
@@ -1264,6 +1266,7 @@
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
                                                 x:Name="TotalMoney" />
+
                                         </Grid>
                                     </Border>
                                     <Border Grid.Column="4">
@@ -1288,6 +1291,30 @@
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
                                                 x:Name="EmployeeProfit" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Grid.Column="6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock
+                                                FontSize="20"
+                                                Grid.Column="0"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center">
+                                                Total service fee:
+                                            </TextBlock>
+                                            <TextBlock
+                                                FontSize="20"
+                                                FontStyle="Italic"
+                                                Foreground="Red"
+                                                Grid.Column="2"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                x:Name="TotalServiceFee" />
                                         </Grid>
                                     </Border>
 

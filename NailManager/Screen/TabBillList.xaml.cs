@@ -88,7 +88,7 @@ namespace NailManager.Screen
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-
+        private User userLocal { get; set; }
         public TabBillList()
         {
             InitializeComponent();
@@ -111,12 +111,14 @@ namespace NailManager.Screen
 
             GetStaffList();
             TotalPrice.Text = "0.00 $";
+        
         }
 
         private async void GetStaffList()
         {
             ShowLoading(true);
             var user = await DatabaseHelper.GetUserAsync();
+            userLocal = user;
             string url = $"/user/list?branch_id={user.BranchId}";
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             var apiService = new Api();
@@ -228,7 +230,7 @@ namespace NailManager.Screen
                 // IsProductSelected = IsBillSelected; // Chỉ cho phép nhấn nút Plus nếu hóa đơn đang xử lý
 
                 // Xây dựng URL API và tham số
-                string apiUrl = "/bill/branch/detail";
+                // string apiUrl = "/bill/branch/detail";
                 var parameters = new Dictionary<string, string>
                     { };
                 string param = JsonConvert.SerializeObject(parameters, Formatting.Indented);
@@ -239,7 +241,12 @@ namespace NailManager.Screen
                 {
                     // Console.WriteLine($"{apiUrl}?bill_id={selectedBill.bill_id.ToString()}");
                     // Gọi phương thức GetApiAsync để thực hiện yêu cầu GET
-                    await apiService.GetApiAsync($"{apiUrl}?bill_id={selectedBill.bill_id.ToString()}", parameters,
+                    var selectedEmployee = StaffComboBox.SelectedItem as UserFromListApi;
+                    int? employeeId = selectedEmployee?.user_id;
+                    var apiUrl = employeeId != null
+                        ? $"/bill/user/detail?bill_id={selectedBill.bill_id.ToString()}&user_id={employeeId.ToString()}"
+                        : $"/bill/branch/detail?bill_id={selectedBill.bill_id.ToString()}&user_id=-1";
+                    await apiService.GetApiAsync(apiUrl, parameters,
                         (responseBody) =>
                         {
                             try
@@ -250,7 +257,7 @@ namespace NailManager.Screen
                                 if (responseData != null && responseData.status == 200)
                                 {
                                     var billDetail = responseData.data;
-                                
+
                                     // Cập nhật UI với thông tin từ billDetail
                                     CustomerNameTextBox.Text = billDetail.customer_name;
                                     PhoneNumberTextBox.Text = billDetail.customer_phone;
@@ -266,7 +273,7 @@ namespace NailManager.Screen
                                         // string displayName = product.product_name.Length > 25
                                         //     ? product.product_name.Substring(0, 25) + "..."
                                         //     : product.product_name;
-                                    
+
                                         SelectedItems.Add(new ProductInBillModel()
                                         {
                                             product_name = product.product_name,
@@ -278,6 +285,7 @@ namespace NailManager.Screen
                                             service_fee = product.service_fee
                                         });
                                     }
+
                                     TotalPriceChanged();
                                 }
                                 else
@@ -330,6 +338,16 @@ namespace NailManager.Screen
                 FontFamily = new FontFamily("Roboto"),
             };
             document.Blocks.Add(title);
+            var employee = StaffComboBox.SelectedItem as UserFromListApi;
+            var employeeName = employee?.name;
+            Paragraph Name = new Paragraph(new Run(employeeName != null ? employeeName : userLocal.Name))
+            {
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(Name);
             Paragraph FromDate = new Paragraph(new Run("From: " + DatePickerInputFrom.SelectedDate.ToString()))
             {
                 FontSize = 14,
@@ -348,7 +366,7 @@ namespace NailManager.Screen
             document.Blocks.Add(ToDate);
 
             // Thêm tiêu đề bảng
-            document.Blocks.Add(CreateHeaderRow(new[] { "Bill ID", "Customer","Total ($)" }));
+            document.Blocks.Add(CreateHeaderRow(new[] { "Bill ID", "Customer", "Total ($)" }));
 
             // Thêm các dòng hóa đơn
             int index = 1;
@@ -362,6 +380,7 @@ namespace NailManager.Screen
                 }));
                 index++;
             }
+
             Paragraph totalBill = new Paragraph(new Run("Total Bill: " + TotalBill.Text))
             {
                 FontSize = 14,
@@ -378,7 +397,7 @@ namespace NailManager.Screen
                 FontFamily = new FontFamily("Roboto"),
             };
             document.Blocks.Add(totalPrice);
-            Paragraph totalProfit = new Paragraph(new Run("Total Profit: " + EmployeeProfit.Text))
+            Paragraph totalProfit = new Paragraph(new Run("Total Profit: " + EmployeeProfit.Text ))
             {
                 FontSize = 14,
                 FontWeight = FontWeights.Light,
@@ -386,6 +405,14 @@ namespace NailManager.Screen
                 FontFamily = new FontFamily("Roboto"),
             };
             document.Blocks.Add(totalProfit);
+            Paragraph totalSerivceFee = new Paragraph(new Run("Total Service Fee: " + TotalServiceFee.Text))
+            {
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(totalSerivceFee);
             // Thực hiện in tài liệu
             PrintBill(document);
         }
@@ -479,6 +506,8 @@ namespace NailManager.Screen
 
                             TotalBill.Text = (responseData.data.total_bill != 0 ? responseData.data.total_bill : 0)
                                 .ToString();
+                            
+                            TotalServiceFee.Text = (responseData.data.total_service_fee != 0 ? responseData.data.total_service_fee : 0) + " $";
                             foreach (var bill in responseData.data.list)
                             {
                                 // Console.WriteLine("bill.customer_phone: " + bill.customer_phone);
@@ -526,7 +555,7 @@ namespace NailManager.Screen
         private string FormatStatus(string status)
         {
             return status == "1" ? "Success" : "Cancel";
-        } 
+        }
 
         private void BillIdTextBox_KeyDown(object sender, KeyEventArgs e)
         {
@@ -560,7 +589,7 @@ namespace NailManager.Screen
         private async void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             BillIdSearch.Text = string.Empty;
-            CustomerNameTextBox.Text= string.Empty;
+            CustomerNameTextBox.Text = string.Empty;
             PhoneNumberTextBox.Text = string.Empty;
             // Đặt ComboBox về giá trị ban đầu
             StaffComboBox.SelectedIndex = -1;
@@ -606,7 +635,8 @@ namespace NailManager.Screen
         {
             if (SelectedBill == null)
             {
-                MessageBox.Show("Please select a bill to cancel.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Please select a bill to cancel.", "Warning", MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
                 return;
             }
 
@@ -626,7 +656,9 @@ namespace NailManager.Screen
                 var apiService = new Api();
                 await apiService.PostApiAsyncWithoutParam(apiUrl, (responseBody) =>
                 {
-                    var responseData = JsonConvert.DeserializeObject<APIResponFromCancelBill>(responseBody); // Đảm bảo `ApiResponse` là lớp phù hợp để phân tích kết quả.
+                    var responseData =
+                        JsonConvert.DeserializeObject<APIResponFromCancelBill>(
+                            responseBody); // Đảm bảo `ApiResponse` là lớp phù hợp để phân tích kết quả.
                     var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
                     Console.WriteLine("responseconvert when cancel");
                     Console.WriteLine(responseconvert);
@@ -639,18 +671,21 @@ namespace NailManager.Screen
                             FilteredBill.Refresh();
                             SelectedBill = null;
                             GetBills();
-                            MessageBox.Show("Bill has been successfully canceled.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show("Bill has been successfully canceled.", "Success", MessageBoxButton.OK,
+                                MessageBoxImage.Information);
                         });
                     }
                     else
                     {
-                        MessageBox.Show($"Failed to cancel the bill: {responseData?.message ?? "Unknown error"}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show($"Failed to cancel the bill: {responseData?.message ?? "Unknown error"}",
+                            "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 });
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
             finally
             {
@@ -726,16 +761,6 @@ namespace NailManager.Screen
             };
             document.Blocks.Add(title);
 
-            // Bill Info
-            // Paragraph billInfo =
-            //     new Paragraph(new Run(
-            //         $"InvoiceID: #{billId}\nStaff: {StaffTextBox.Text}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
-            //     {
-            //         FontSize = 12,
-            //         TextAlignment = TextAlignment.Left,
-            //         FontFamily = new FontFamily("Roboto"),
-            //     };
-            // document.Blocks.Add(billInfo);
 
             // Table Header
             document.Blocks.Add(CreateHeaderRow(new[] { "NO", "Name", "Price" }));
@@ -899,7 +924,7 @@ namespace NailManager.Screen
         private void PrintBill(FlowDocument document)
         {
             PrintDialog printDialog = new PrintDialog();
-          
+
             var printQueue = printDialog.PrintQueue;
             XpsDocumentWriter writer = PrintQueue.CreateXpsDocumentWriter(printQueue);
             writer.Write(((IDocumentPaginatorSource)document).DocumentPaginator);
@@ -924,6 +949,7 @@ namespace NailManager.Screen
             ClearOrderDetails();
             // UpdateProductSelectionState();
         }
+
         private void ShowLoading(bool show)
         {
             Dispatcher.Invoke(() => { LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed; });

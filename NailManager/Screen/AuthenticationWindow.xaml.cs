@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace NailManager.Screen
 {
@@ -9,29 +10,51 @@ namespace NailManager.Screen
         public string EnteredPassword { get; private set; }
         public bool IsAuthenticated { get; private set; }
         private bool _isPasswordVisible = false;
+        public string UserPermission { get; private set; }
 
         public AuthenticationWindow()
         {
             InitializeComponent();
+            PermissionComboBox.SelectedItem = PermissionComboBox.Items[0];
         }
 
-        private void SubmitButton_Click(object sender, RoutedEventArgs e)
+        private void Submit(object sender, RoutedEventArgs e)
         {
-            // EnteredUsername = UsernameTextBox.Text;
             EnteredPassword = PasswordBox.Password;
 
-            // Validate the user
-            if (ValidateUser(EnteredUsername, EnteredPassword))
+            if (PermissionComboBox.SelectedItem is ComboBoxItem selectedItem)
             {
+                string selectedPermission = selectedItem.Content.ToString();
+                UserPermission = selectedPermission;
+
+                // Kiểm tra đầu vào dựa trên loại quyền
+                if (selectedPermission == "Branch")
+                {
+                    EnteredUsername = UsernameGrid.Text;
+                    if (string.IsNullOrEmpty(EnteredUsername) || string.IsNullOrEmpty(EnteredPassword))
+                    {
+                        MessageBox.Show("Please enter both Username and Password for Branch.", "Input Required",
+                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                        IsAuthenticated = false;
+                        return;
+                    }
+                }
+                else if (selectedPermission == "STAFF")
+                {
+                    if (string.IsNullOrEmpty(EnteredPassword))
+                    {
+                        MessageBox.Show("Please enter the Password for Staff.", "Input Required", MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                        IsAuthenticated = false;
+                        return;
+                    }
+                }
+
                 IsAuthenticated = true;
-                this.DialogResult = true; // Set the dialog result to true to close the window
-            }
-            else
-            {
-                MessageBox.Show("Invalid credentials. Please try again.", "Authentication Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-                IsAuthenticated = false;
+                this.DialogResult = true;
             }
         }
+
 
         private void ShowPassword(object sender, RoutedEventArgs e)
         {
@@ -53,10 +76,35 @@ namespace NailManager.Screen
             }
         }
 
+        private void SubmitKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                Submit(sender, e);
+            }
+        }
+
         private bool ValidateUser(string username, string password)
         {
             // Dummy validation logic; replace with actual authentication logic
-            return username != "" && password !=""; // Replace with real validation
+            return username != "" && password != ""; // Replace with real validation
+        }
+
+        private void PermissionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (PermissionComboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                if (selectedItem.Content.ToString() == "Branch")
+                {
+                    UsernameGrid.Visibility = Visibility.Visible;
+                    UsernameTextBlock.Visibility = Visibility.Visible;
+                }
+                else // "STAFF"
+                {
+                    UsernameTextBlock.Visibility = Visibility.Collapsed;
+                    UsernameGrid.Visibility = Visibility.Collapsed;
+                }
+            }
         }
     }
 }

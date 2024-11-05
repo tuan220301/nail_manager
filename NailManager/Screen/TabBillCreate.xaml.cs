@@ -163,8 +163,9 @@ public partial class TabBillCreate : UserControl
         });
     }
 
-    private async void GetListProduct(int branchId = 1)
+    private async void GetListProduct(int branchId)
     {
+        Console.WriteLine("branch_id: " + branchId);
         ShowLoading(true);
 
         string url = $"/product/list?branch_id={branchId}";
@@ -182,7 +183,7 @@ public partial class TabBillCreate : UserControl
                 }
 
                 var responseData = JsonConvert.DeserializeObject<BranchApiResponse<List<Product>>>(responseBody);
-                // string responseDataJson = JsonConvert.SerializeObject(responseData, Formatting.Indented);
+                // string responseDataJson = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
                 // Console.WriteLine("responseData (JSON) in get product from tab list: ");
                 // Console.WriteLine(responseDataJson);
                 if (responseData == null)

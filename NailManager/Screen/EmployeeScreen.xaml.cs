@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Http;
 using System.Printing;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -55,173 +56,249 @@ namespace NailManager.Screen
 
             // Lấy thông tin người dùng và thiết lập giao diện
             GetUser();
+            SaveButton.Visibility = Visibility.Collapsed;
             // Lấy danh sách chi nhánh
             // GetBrandList();
             // Lấy danh sách người dùng
             // GetListUser();
         }
 
-        private async void OnUserItemClicked(object sender, MouseButtonEventArgs e)
+        private async void OnSaveButtonClick(object sender, RoutedEventArgs e)
         {
-            // Tạo các biến để lưu trữ username và password
-            // string user_name = null;
-            string password = null;
-
-            // Nếu không phải admin thì hiển thị modal xác thực
-            if (permision != "1")
+            try
             {
-                AuthenticationWindow authWindow = new AuthenticationWindow();
-                bool? dialogResult = authWindow.ShowDialog();
-
-                // Nếu xác thực không thành công, thoát khỏi hàm
-                if (dialogResult != true || !authWindow.IsAuthenticated)
+                // Kiểm tra xem người dùng đã được chọn hay chưa
+                if (_selectedUser == null)
                 {
+                    MessageBox.Show("Please select a user to update.", "Error", MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
                     return;
                 }
 
-                // Lấy username và password từ cửa sổ xác thực
-                // user_name = authWindow.EnteredUsername;
+                // Chuẩn bị tham số cho API
+                var parameters = new Dictionary<string, string>
+                {
+                    { "user_id", _selectedUser.user_id.ToString() },
+                    { "name", UserNameTextBox.Text }
+                };
+
+                // URL API
+                string apiUrl = "/user/update";
+
+                // Gọi hàm PostApiAsync để gửi yêu cầu
+                var apiService = new Api();
+                await apiService.PostApiAsync(apiUrl, parameters, (responseBody) =>
+                {
+                    try
+                    {
+                        // Parse response để kiểm tra xem có thành công không
+                        var responseData = JsonConvert.DeserializeObject<ApiResponse>(responseBody);
+                        string responseDataJson = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
+                        Console.WriteLine("responseData update user: ");
+                        Console.WriteLine(responseDataJson);
+                        if (responseData != null && responseData.status == 200)
+                        {
+                            MessageBox.Show("User name updated successfully!", "Success", MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+                            GetListUser(userLocal.BranchId);
+                        }
+                        else
+                        {
+                            MessageBox.Show($"Failed to update user name: {responseData?.message ?? "Unknown error"}",
+                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error parsing response: {ex.Message}");
+                        MessageBox.Show($"Error parsing response: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+
+        private async void OnUserItemClicked(object sender, MouseButtonEventArgs e)
+        {
+            string password = null;
+            bool? dialogResult = null;
+            string permissionType = null;
+            AuthenticationWindow authWindow = new AuthenticationWindow();
+            UserFromListApi selectedUser = null;
+
+            // Lấy dữ liệu user từ sự kiện click nếu có
+            if (sender is Border border && border.DataContext is UserFromListApi clickedUser)
+            {
+                selectedUser = clickedUser;
+                _selectedUser = selectedUser;
+            }
+
+            if (permision != "1")
+            {
+                dialogResult = authWindow.ShowDialog();
+                permissionType = authWindow.UserPermission;
+
+                if (dialogResult != true || !authWindow.IsAuthenticated)
+                {
+                    return; // Không xác thực được, thoát
+                }
+
                 password = authWindow.EnteredPassword;
-                // Console.WriteLine("Username: " + user_name);
-                // Console.WriteLine("Password: " + password);
             }
 
             ShowLoading(true);
 
-            if (sender is Border border && border.DataContext is UserFromListApi selectedUser)
+            // Kiểm tra loại permission để xác định logic branch hay user
+            if (permissionType == "Branch")
             {
-                // Gán các giá trị từ dòng được chọn vào các TextBox
-                UserIDTextBox.Text = selectedUser.user_id.ToString();
-                UserNameTextBox.Text = selectedUser.name;
-                RateTextBox.Text = selectedUser.rate.ToString();
-                PasswordTextBox.Text = ""; // Không hiển thị mật khẩu thực
+                // Gọi API xử lý cho Branch với thông tin username và password
+                var username = authWindow.EnteredUsername;
+                await SubmitBranchLogin(username, password);
+                SaveButton.Visibility = Visibility.Visible;
+                UserNameTextBox.Text = selectedUser?.name;
+                RateTextBox.Text = selectedUser?.rate.ToString();
+                UserIDTextBox.Text = selectedUser?.user_id.ToString();
 
-                // Lưu trữ người dùng hiện tại để chỉnh sửa
-                _selectedUser = selectedUser;
-
-                // Hiển thị StackPanel chứa UserIDTextBox và mở rộng cột
-                UserIDPanel.Visibility = Visibility.Visible;
-                UserIDColumn.Width = new GridLength(200); // Hoặc kích thước bạn muốn
-
-                // Đổi nội dung nút thành "Edit"
-                // SaveButton.Content = "Edit";
-
-                // Thiết lập giá trị cho PermissionComboBox dựa trên giá trị permission
-                // if (selectedUser.permission == 2.ToString())
-                // {
-                //     PermissionComboBox.SelectedIndex = 0; // CASHIER
-                // }
-                // else if (selectedUser.permission == 3.ToString())
-                // {
-                //     PermissionComboBox.SelectedIndex = 1; // STAFF
-                // }
-                // else
-                // {
-                //     PermissionComboBox.SelectedIndex = -1; // Không chọn gì nếu permission không khớp
-                // }
-
-                // Thiết lập thời gian bắt đầu và kết thúc cho ngày hiện tại
-                TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
-                DateTime fromDate = DateTime.Today;
-                DateTime toDate = DateTime.Today;
-                DateTime adjustedFromDate = fromDate.Add(-offset);
-                DateTime adjustedToDate = toDate.Add(-offset).AddHours(23).AddMinutes(59).AddSeconds(59);
-
-                // Chuyển đổi fromDate và toDate thành chuỗi theo định dạng yêu cầu
-                string startDay = adjustedFromDate.ToString("yyyy-MM-dd HH:mm:ss");
-                string endDay = adjustedToDate.ToString("yyyy-MM-dd HH:mm:ss");
-
-                // Lấy user_id và branch_id
-                int userId = selectedUser.user_id;
-                int branchId = selectedUser.branch_id; // Giả sử branch_id có trong selectedUser
-
-                // Xây dựng các tham số dưới dạng Dictionary<string, string>
-                var parameters = new Dictionary<string, string>
+                // Truyền user_id từ selectedUser nếu có
+                await GetUserDataAndBills(isBranch: true, userId: selectedUser?.user_id, password: password);
+            }
+            else
+            {
+                if (selectedUser != null)
                 {
-                    { "branch_id", branchId.ToString() },
-                    { "user_id", userId.ToString() },
-                    { "start_day", startDay },
-                    { "end_day", endDay },
-                    // { "status", "2" }
-                };
-                
-                // Thêm username và password vào parameters nếu có
-                if (!string.IsNullOrEmpty(password))
-                {
-                    parameters.Add("password", password);
+                    // Nếu là user, ẩn nút Save và gán các giá trị từ dòng được chọn vào các TextBox
+                    SaveButton.Visibility = Visibility.Collapsed;
+                    UserIDTextBox.Text = selectedUser.user_id.ToString();
+                    UserNameTextBox.Text = selectedUser.name;
+                    RateTextBox.Text = selectedUser.rate.ToString();
+                    PasswordTextBox.Text = ""; // Không hiển thị mật khẩu thực
+                    UserIDPanel.Visibility = Visibility.Visible;
+                    UserIDColumn.Width = new GridLength(200);
+
+                    // Gọi hàm lấy thông tin dữ liệu
+                    await GetUserDataAndBills(isBranch: false, userId: selectedUser.user_id, password: password);
                 }
-                Console.WriteLine("param:");
-                // Console log các tham số
-                foreach (var param in parameters)
-                {
-                    Console.WriteLine($"{param.Key}: {param.Value}");
-                }
+            }
 
-                // Tạo URL API
-                string apiUrl = "/bill/user/get"; // Đường dẫn tương đối cho API
-                var apiService = new Api();
+            ShowLoading(false);
+        }
 
+// Hàm chung để lấy dữ liệu và gọi API bills
+        private async Task GetUserDataAndBills(bool isBranch, int? userId = null, string password = null)
+        {
+            // Thiết lập thời gian từ và đến mặc định
+            TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
+            DateTime fromDate = DateTime.Today;
+            DateTime toDate = DateTime.Today;
+            DateTime adjustedFromDate = fromDate.Add(-offset);
+            DateTime adjustedToDate = toDate.Add(-offset).AddHours(23).AddMinutes(59).AddSeconds(59);
+
+            string startDay = adjustedFromDate.ToString("yyyy-MM-dd HH:mm:ss");
+            string endDay = adjustedToDate.ToString("yyyy-MM-dd HH:mm:ss");
+
+            // Kiểm tra branch_id
+            int branchId;
+            if (userLocal?.BranchId != null)
+            {
+                branchId = userLocal.BranchId;
+            }
+            else if (BranchId > 0)
+            {
+                branchId = BranchId;
+            }
+            else
+            {
+                Console.WriteLine("Error: branch_id is missing or invalid.");
+                MessageBox.Show("Branch ID is missing or invalid.", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            // Thiết lập URL API và tham số tùy thuộc vào loại user
+            string apiUrl = isBranch ? "/bill/branch/get" : "/bill/user/get";
+
+            var parameters = new Dictionary<string, string>
+            {
+                { "branch_id", branchId.ToString() },
+                { "start_day", startDay },
+                { "end_day", endDay }
+            };
+
+            // Chỉ thêm user_id nếu nó có giá trị hợp lệ
+            if (userId.HasValue && userId.Value > 0)
+            {
+                parameters["user_id"] = userId.Value.ToString();
+            }
+
+            if (!string.IsNullOrEmpty(password) && !isBranch)
+            {
+                parameters["password"] = password;
+            }
+
+            if (isBranch)
+            {
+                parameters["status"] = "-1";
+            }
+
+            Console.WriteLine("Parameters for API request:");
+            foreach (var param in parameters)
+            {
+                Console.WriteLine($"{param.Key}: {param.Value}");
+            }
+
+            var apiService = new Api();
+            await apiService.PostApiAsync(apiUrl, parameters, (responseBody) =>
+            {
                 try
                 {
-                    // Gọi PostApiAsync để gửi yêu cầu
-                    await apiService.PostApiAsync(apiUrl, parameters, (responseBody) =>
+                    var responseData = JsonConvert.DeserializeObject<ListBillModel>(responseBody);
+                    string responseDataJson = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
+                    Console.WriteLine("responseData from employee: ");
+                    Console.WriteLine(responseDataJson);
+                    if (responseData != null && responseData.status == 200)
                     {
-                        string formattedJson = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
-                        Console.WriteLine(formattedJson);
-                        try
-                        {
-                            var responseData =
-                                JsonConvert.DeserializeObject<BillListRespon>(responseBody);
-                            var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
-                            Console.WriteLine("responseconvert when get bill with user");
-                            Console.WriteLine(responseconvert);
-                            // Console JSON đẹp và dễ đọc
-                            Console.WriteLine("Response from API:");
+                        // Xóa dữ liệu cũ và cập nhật dữ liệu mới
+                        FilteredBills.Clear();
+                        TotalPriceText.Text = $"Total Price: {responseData.data.total_price} $";
+                        TotalProfitText.Text = $"Total Profit: {responseData.data.total_profit} $";
+                        TotalBillText.Text = $"Total Bill: {responseData.data.total_bill}";
 
-                            if (responseData != null && responseData.status == 200)
-                            {
-                                // Cập nhật danh sách FilteredBills với dữ liệu mới từ API
-                                if(responseData.data.list.Count > 0){
-                                    FilteredBills.Clear();
-                                    foreach (var bill in responseData.data.list)
-                                    {
-                                        FilteredBills.Add(bill);
-                                    }
-                                }
-                            
-                                // Cập nhật các trường khác nếu cần
-                                TotalPriceText.Text = "Total Price: " + responseData.data.total_price;
-                                TotalProfitText.Text = "Total Profit: " + responseData.data.total_profit;
-                                TotalBillText.Text = "Total Bill: " + responseData.data.total_bill;
-                            }
-                            else
-                            {
-                                Console.WriteLine($"API Error: {responseData?.message ?? "Unknown error"}");
-                                MessageBox.Show($"No bill found", "Error",
-                                    MessageBoxButton.OK, MessageBoxImage.Error);
-                            }
-                        }
-                        catch (Exception ex)
+                        foreach (var bill in responseData.data.list)
                         {
-                            Console.WriteLine($"Error parsing response: {ex.Message}");
-                            MessageBox.Show($"Error parsing response: {ex.Message}", "Error", MessageBoxButton.OK,
-                                MessageBoxImage.Error);
+                            FilteredBills.Add(new Bill
+                            {
+                                bill_id = bill.bill_id,
+                                customer_name = bill.customer_name,
+                                customer_phone = bill.customer_phone,
+                                branch_id = bill.branch_id,
+                                price = bill.total_price,
+                                created_at = bill.created_at,
+                                status = FormatStatus(bill.status)
+                            });
                         }
-                    });
+                    }
+                    else
+                    {
+                        MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error calling API: {ex.Message}");
-                    MessageBox.Show($"Error calling API: {ex.Message}", "Error", MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    Console.WriteLine($"Error parsing response: {ex.Message}");
+                    MessageBox.Show($"Error parsing response: {ex.Message}");
                 }
-                finally
-                {
-                    ShowLoading(false);
-                }
-            }
+            });
         }
 
+
+        private string FormatStatus(string status)
+        {
+            return status == "1" ? "Success" : "Cancel";
+        }
 
         private async void GetUser()
         {
@@ -251,9 +328,42 @@ namespace NailManager.Screen
             }
         }
 
+        private async Task<bool> SubmitBranchLogin(string username, string password)
+        {
+            try
+            {
+                string json = JsonConvert.SerializeObject(new { user_name = username, password = password });
+                ApiConnect apiString = new ApiConnect();
+                using (var client = new HttpClient())
+                {
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    var response = await client.PostAsync($"{apiString.Url}/auth/login", content);
 
-       
-        private async void GetListUser(int branchId )
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        LoginRespon? responseData = JsonConvert.DeserializeObject<LoginRespon>(responseBody);
+                        string responseDataJson = JsonConvert.SerializeObject(responseBody, Formatting.Indented);
+                        Console.WriteLine("responseData (JSON) in login from employee: ");
+                        Console.WriteLine(responseDataJson);
+                        if (responseData?.data != null)
+                        {
+                            return true; // Đăng nhập thành công
+                        }
+                    }
+                }
+
+                return false; // Đăng nhập thất bại
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during branch login: {ex.Message}");
+                return false;
+            }
+        }
+
+
+        private async void GetListUser(int branchId)
         {
             ShowLoading(true); // Hiển thị loading
 
@@ -322,7 +432,7 @@ namespace NailManager.Screen
             }
         }
 
-      
+
         private async void OnDeleteButtonClick(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is UserFromListApi userToDelete)
@@ -378,15 +488,6 @@ namespace NailManager.Screen
                 }
             }
         }
-
-        // private void BranchComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        // {
-        //     if (BranchComboBox.SelectedValue != null)
-        //     {
-        //         int selectedBranchId = (int)BranchComboBox.SelectedValue;
-        //         GetListUser(selectedBranchId); // Gọi lại với branch_id mới
-        //     }
-        // }
 
 
         private void OnCancelButtonClick(object sender, RoutedEventArgs e)
@@ -460,7 +561,7 @@ namespace NailManager.Screen
             // Total
             Paragraph totalParagraph =
                 new Paragraph(new Run(
-                    $"\n{totalPrice} $\n{total_profit} $\n{total_bill} $"))
+                    $"\n{totalPrice} $\n{total_profit} $\n{total_bill}"))
                 {
                     FontSize = 14,
                     FontWeight = FontWeights.Bold,
@@ -505,13 +606,15 @@ namespace NailManager.Screen
         {
             // Create a FlowDocument for the bill
             FlowDocument billDocument = CreateBillDocument();
-
-            // Show a preview of the bill
-            // PreviewBill(billDocument);
-            PrintBill(billDocument);
-            // Optionally, you can also print the bill directly after previewing
-            // Uncomment the following line if you want to print immediately after previewing
-            // PrintBill(billDocument);
+            if (FilteredBills.Count > 0)
+            {
+                PrintBill(billDocument);
+            }
+            else
+            {
+                MessageBox.Show($"Cannot print Bill with empty list", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
     }
 }
