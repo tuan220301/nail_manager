@@ -36,6 +36,7 @@ namespace NailManager.Screen
             }
         }
 
+
         private bool _isPasswordVisible = false;
         public ObservableCollection<ListBillRespone> Bill { get; set; }
         public ICollectionView FilteredBill { get; set; }
@@ -65,30 +66,11 @@ namespace NailManager.Screen
             }
         }
 
-        private bool _isAdmin;
-
-        public bool IsAdmin
-        {
-            get => _isAdmin;
-            set
-            {
-                _isAdmin = value;
-                OnPropertyChanged(nameof(IsAdmin));
-            }
-        }
-
-        public bool IsProductSelected
-        {
-            get => _isProductSelected;
-            set
-            {
-                _isProductSelected = value;
-                OnPropertyChanged(nameof(IsProductSelected));
-            }
-        }
+        private BilLResponBranch _selectedBillDetail;
 
         public event PropertyChangedEventHandler PropertyChanged;
         private User userLocal { get; set; }
+
         public TabBillList()
         {
             InitializeComponent();
@@ -104,14 +86,13 @@ namespace NailManager.Screen
             _wpfWindow = new WpfSvgWindow(500, 500, wpfRenderer);
             DataContext = this;
             IsBillSelected = false;
-            GetBrandList();
+
             MainContentBorder.Visibility = Visibility.Collapsed;
-            DatePickerInputFrom.SelectedDate = DateTime.Today;
-            DatePickerInputTo.SelectedDate = DateTime.Today;
+            DatePickerInputFrom.SelectedDate = DateTime.Today; // 0 giờ ngày hôm nay
+            DatePickerInputTo.SelectedDate = DateTime.Today.AddDays(1).AddTicks(-1); // 23:59:59 ngày hôm nay
 
             GetStaffList();
             TotalPrice.Text = "0.00 $";
-        
         }
 
         private async void GetStaffList()
@@ -122,7 +103,7 @@ namespace NailManager.Screen
             string url = $"/user/list?branch_id={user.BranchId}";
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             var apiService = new Api();
-
+            GetBrandList(user.BranchId);
             await apiService.GetApiAsync(url, parameters, (responseBody) =>
             {
                 try
@@ -178,7 +159,7 @@ namespace NailManager.Screen
             });
         }
 
-        private async void GetBrandList()
+        private async void GetBrandList(int user_branch_id)
         {
             ShowLoading(true); // Hiển thị loading
             string url = "/branch/list";
@@ -193,14 +174,9 @@ namespace NailManager.Screen
 
                     if (responseData != null && responseData.status == 200)
                     {
-                        // Dispatcher.Invoke(() =>
-                        // {
-                        //     BranchComboBox.ItemsSource = responseData.data;
-                        //     BranchComboBox.DisplayMemberPath = "name";
-                        //     BranchComboBox.SelectedValuePath = "branch_id";
-                        //     BranchComboBox.SelectedValue =
-                        //         BranchId > 0 ? BranchId : 1; // Đặt giá trị mặc định là branch_id = 1
-                        // });
+                        var listBranch = responseData.data;
+                        var filterBranch = listBranch.Find(branch => branch.branch_id == user_branch_id);
+                        currentBranch = filterBranch;
                     }
                     else
                     {
@@ -222,91 +198,87 @@ namespace NailManager.Screen
         {
             if (sender is Border border && border.DataContext is ListBillRespone selectedBill)
             {
-                SelectedBill = selectedBill;
+                // ShowLoading(true);
+                // for (int i = 0; i < VisualTreeHelper.GetChildrenCount(MyItemsControl); i++)
+                // {
+                //     var container = VisualTreeHelper.GetChild(MyItemsControl, i);
+                //
+                //     // Kiểm tra nếu phần tử con là Border
+                //     if (container is Border border2)
+                //     {
+                //         border2.Background = Brushes.Transparent; // Reset màu nền
+                //     }
+                // }
+                //
+                // SelectedBill = selectedBill;
+                // if (sender is Border clickedBorder)
+                // {
+                //     clickedBorder.Background = Brushes.Green; // Đổi màu nền
+                // }
 
-                // Cập nhật IsBillSelected dựa trên trạng thái của hóa đơn
-                // IsBillSelected = selectedBill.status == 1; // Chỉ cho phép chọn nếu status là PROCESSING
-
-                // IsProductSelected = IsBillSelected; // Chỉ cho phép nhấn nút Plus nếu hóa đơn đang xử lý
-
-                // Xây dựng URL API và tham số
-                // string apiUrl = "/bill/branch/detail";
-                var parameters = new Dictionary<string, string>
-                    { };
-                string param = JsonConvert.SerializeObject(parameters, Formatting.Indented);
-                // Console.WriteLine("parameters");
-                // Console.WriteLine(param);
+                var parameters = new Dictionary<string, string> { };
                 var apiService = new Api();
+
+
+                // Console.WriteLine("bill id click: " + selectedBill.bill_id);
+                // Console.WriteLine("bill id is selected: " + selectedBill.IsSelected);
+
                 try
                 {
-                    // Console.WriteLine($"{apiUrl}?bill_id={selectedBill.bill_id.ToString()}");
-                    // Gọi phương thức GetApiAsync để thực hiện yêu cầu GET
                     var selectedEmployee = StaffComboBox.SelectedItem as UserFromListApi;
                     int? employeeId = selectedEmployee?.user_id;
                     var apiUrl = employeeId != null
-                        ? $"/bill/user/detail?bill_id={selectedBill.bill_id.ToString()}&user_id={employeeId.ToString()}"
-                        : $"/bill/branch/detail?bill_id={selectedBill.bill_id.ToString()}&user_id=-1";
-                    await apiService.GetApiAsync(apiUrl, parameters,
-                        (responseBody) =>
+                        ? $"/bill/user/detail?bill_id={selectedBill.bill_id}&user_id={employeeId}"
+                        : $"/bill/branch/detail?bill_id={selectedBill.bill_id}&user_id=-1";
+
+                    await apiService.GetApiAsync(apiUrl, parameters, (responseBody) =>
+                    {
+                        var responseData =
+                            JsonConvert.DeserializeObject<BranchApiResponse<BilLResponBranch>>(responseBody);
+                        // Console.WriteLine("get bill detail");
+                        // Console.WriteLine(Utls.FormatJsonString(responseBody));
+                        if (responseData != null && responseData.status == 200)
                         {
-                            try
+                            _selectedBillDetail = responseData.data; // Lưu dữ liệu trả về vào biến
+                            _selectedBillDetail.bill_id = selectedBill.bill_id;
+                            CustomerNameTextBox.Text = _selectedBillDetail.customer_name;
+                            PhoneNumberTextBox.Text = _selectedBillDetail.customer_phone;
+                            TotalPrice.Text = $"{_selectedBillDetail.total_price} $";
+                            SelectedItems.Clear();
+
+                            foreach (var product in _selectedBillDetail.service)
                             {
-                                var responseData =
-                                    JsonConvert.DeserializeObject<BranchApiResponse<BilLResponBranch>>(responseBody);
-                                Console.WriteLine("responseData: " + Utls.FormatJsonString(responseBody));
-                                if (responseData != null && responseData.status == 200)
+                                SelectedItems.Add(new ProductInBillModel()
                                 {
-                                    var billDetail = responseData.data;
-
-                                    // Cập nhật UI với thông tin từ billDetail
-                                    CustomerNameTextBox.Text = billDetail.customer_name;
-                                    PhoneNumberTextBox.Text = billDetail.customer_phone;
-                                    TotalPrice.Text = $"{billDetail.total_price} $";
-                                    SelectedItems.Clear();
-                                    string productsJson =
-                                        JsonConvert.SerializeObject(billDetail, Formatting.Indented);
-                                    Console.WriteLine("Bill Detail Products:");
-                                    Console.WriteLine(productsJson);
-                                    foreach (var product in billDetail.service)
-                                    {
-                                        // Kiểm tra độ dài của product_name trước khi cắt
-                                        // string displayName = product.product_name.Length > 25
-                                        //     ? product.product_name.Substring(0, 25) + "..."
-                                        //     : product.product_name;
-
-                                        SelectedItems.Add(new ProductInBillModel()
-                                        {
-                                            product_name = product.product_name,
-                                            price = product.price,
-                                            bill_id = product.bill_id,
-                                            user_id = product.user_id,
-                                            user_name = ShowNameEmployee(product.user_id),
-                                            bill_detail_id = product.bill_detail_id,
-                                            service_fee = product.service_fee
-                                        });
-                                    }
-
-                                    TotalPriceChanged();
-                                }
-                                else
-                                {
-                                    MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
-                                }
+                                    product_name = product.product_name,
+                                    price = product.price,
+                                    bill_id = product.bill_id,
+                                    user_id = product.user_id,
+                                    user_name = ShowNameEmployee(product.user_id),
+                                    bill_detail_id = product.bill_detail_id,
+                                    service_fee = product.service_fee
+                                });
                             }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error parsing response: {ex.Message}");
-                                MessageBox.Show($"Error parsing response: {ex.Message}", "Error", MessageBoxButton.OK,
-                                    MessageBoxImage.Error);
-                            }
-                        });
+
+                            TotalPriceChanged();
+                        }
+                        else
+                        {
+                            MessageBox.Show($"API Error: {responseData?.message ?? "Unknown error"}");
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Error fetching bill details: {ex.Message}");
                 }
+                // finally
+                // {
+                //     ShowLoading(false);
+                // }
             }
         }
+
 
         private string ShowNameEmployee(int employeID)
         {
@@ -348,27 +320,31 @@ namespace NailManager.Screen
                 FontFamily = new FontFamily("Roboto"),
             };
             document.Blocks.Add(Name);
-            Paragraph FromDate = new Paragraph(new Run("From: " + DatePickerInputFrom.SelectedDate.ToString()))
-            {
-                FontSize = 14,
-                FontWeight = FontWeights.Light,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Roboto"),
-            };
+            Paragraph FromDate =
+                new Paragraph(new Run("From Date: " +
+                                      (DatePickerInputFrom.SelectedDate?.ToString("MM/dd/yyyy") ??
+                                       DateTime.Now.ToString("MM/dd/yyyy"))))
+                {
+                    FontSize = 14,
+                    FontWeight = FontWeights.Light,
+                    TextAlignment = TextAlignment.Center,
+                    FontFamily = new FontFamily("Roboto"),
+                };
             document.Blocks.Add(FromDate);
-            Paragraph ToDate = new Paragraph(new Run("To: " + DatePickerInputTo.SelectedDate.ToString()))
-            {
-                FontSize = 14,
-                FontWeight = FontWeights.Light,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Roboto"),
-            };
+
+            Paragraph ToDate =
+                new Paragraph(new Run("To Date: " +
+                                      (DatePickerInputTo.SelectedDate?.ToString("MM/dd/yyyy") ??
+                                       DateTime.Now.ToString("MM/dd/yyyy"))))
+                {
+                    FontSize = 14,
+                    FontWeight = FontWeights.Light,
+                    TextAlignment = TextAlignment.Center,
+                    FontFamily = new FontFamily("Roboto"),
+                };
             document.Blocks.Add(ToDate);
 
-            // Thêm tiêu đề bảng
-            document.Blocks.Add(CreateHeaderRow(new[] { "Bill ID", "Customer", "Total ($)" }));
-
-            // Thêm các dòng hóa đơn
+            document.Blocks.Add(CreateHeaderRow(new[] { "Bill ID", "Customer", "Status", "Total ($)" }));
             int index = 1;
             foreach (ListBillRespone bill in FilteredBill)
             {
@@ -376,6 +352,8 @@ namespace NailManager.Screen
                 {
                     bill.bill_id.ToString(),
                     bill.customer_name,
+                    bill.status,
+                    // FormatStatus(bill.status),
                     bill.total_price.ToString("N2"),
                 }));
                 index++;
@@ -389,15 +367,27 @@ namespace NailManager.Screen
                 FontFamily = new FontFamily("Roboto"),
             };
             document.Blocks.Add(totalBill);
-            Paragraph totalPrice = new Paragraph(new Run("Total Price: " + TotalMoney.Text))
+            Paragraph totalPriceWithSupply = new Paragraph(new Run("Total Price + Service: " + TotalMoney.Text))
             {
                 FontSize = 14,
                 FontWeight = FontWeights.Light,
                 TextAlignment = TextAlignment.Center,
                 FontFamily = new FontFamily("Roboto"),
             };
-            document.Blocks.Add(totalPrice);
-            Paragraph totalProfit = new Paragraph(new Run("Total Profit: " + EmployeeProfit.Text ))
+            document.Blocks.Add(totalPriceWithSupply);
+            // var totalPriceWithoutSupplyNum = double.Parse(TotalMoney.Text.Replace("$", "").Trim()) 
+            //                                  - double.Parse(TotalServiceFee.Text.Replace("$", "").Trim());
+
+            Paragraph totalPriceWithoutSupply =
+                new Paragraph(new Run("Total Price - Service: " + TotalMoneyWithoutService.Text))
+                {
+                    FontSize = 14,
+                    FontWeight = FontWeights.Light,
+                    TextAlignment = TextAlignment.Center,
+                    FontFamily = new FontFamily("Roboto"),
+                };
+            document.Blocks.Add(totalPriceWithoutSupply);
+            Paragraph totalProfit = new Paragraph(new Run("Total Profit: " + EmployeeProfit.Text))
             {
                 FontSize = 14,
                 FontWeight = FontWeights.Light,
@@ -413,8 +403,359 @@ namespace NailManager.Screen
                 FontFamily = new FontFamily("Roboto"),
             };
             document.Blocks.Add(totalSerivceFee);
+            // PreviewBill(document);
             // Thực hiện in tài liệu
             PrintBill(document);
+        }
+
+        private void PrintRevenue_Click(object sender, RoutedEventArgs e)
+        {
+            if (FilteredBill == null || FilteredBill.IsEmpty)
+            {
+                MessageBox.Show("No bills to print.");
+                return;
+            }
+
+            FlowDocument document = new FlowDocument
+            {
+                PageWidth = 275,
+                PagePadding = new Thickness(10),
+                ColumnWidth = double.PositiveInfinity
+            };
+
+            // Thêm tiêu đề
+            Paragraph title = new Paragraph(new Run("Bill List"))
+            {
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(title);
+            var employee = StaffComboBox.SelectedItem as UserFromListApi;
+            var employeeName = employee?.name;
+            Paragraph Name = new Paragraph(new Run(employeeName != null ? employeeName : userLocal.Name))
+            {
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(Name);
+            Paragraph FromDate =
+                new Paragraph(new Run("From Date: " +
+                                      (DatePickerInputFrom.SelectedDate?.ToString("MM/dd/yyyy") ??
+                                       DateTime.Now.ToString("MM/dd/yyyy"))))
+                {
+                    FontSize = 14,
+                    FontWeight = FontWeights.Light,
+                    TextAlignment = TextAlignment.Center,
+                    FontFamily = new FontFamily("Roboto"),
+                };
+            document.Blocks.Add(FromDate);
+
+            Paragraph ToDate =
+                new Paragraph(new Run("To Date: " +
+                                      (DatePickerInputTo.SelectedDate?.ToString("MM/dd/yyyy") ??
+                                       DateTime.Now.ToString("MM/dd/yyyy"))))
+                {
+                    FontSize = 14,
+                    FontWeight = FontWeights.Light,
+                    TextAlignment = TextAlignment.Center,
+                    FontFamily = new FontFamily("Roboto"),
+                };
+            document.Blocks.Add(ToDate);
+
+            Paragraph totalBill = new Paragraph(new Run("Total Bill: " + TotalBill.Text))
+            {
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(totalBill);
+            Paragraph totalPriceWithSupply = new Paragraph(new Run("Total Price + Service: " + TotalMoney.Text))
+            {
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(totalPriceWithSupply);
+            // var totalPriceWithoutSupplyNum = double.Parse(TotalMoney.Text.Replace("$", "").Trim()) 
+            //                                  - double.Parse(TotalServiceFee.Text.Replace("$", "").Trim());
+
+            Paragraph totalPriceWithoutSupply =
+                new Paragraph(new Run("Total Price - Service: " + TotalMoneyWithoutService.Text))
+                {
+                    FontSize = 14,
+                    FontWeight = FontWeights.Light,
+                    TextAlignment = TextAlignment.Center,
+                    FontFamily = new FontFamily("Roboto"),
+                };
+            document.Blocks.Add(totalPriceWithoutSupply);
+            Paragraph totalProfit = new Paragraph(new Run("Total Profit: " + EmployeeProfit.Text))
+            {
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(totalProfit);
+            Paragraph totalSerivceFee = new Paragraph(new Run("Total Service Fee: " + TotalServiceFee.Text))
+            {
+                FontSize = 14,
+                FontWeight = FontWeights.Light,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            };
+            document.Blocks.Add(totalSerivceFee);
+            // PreviewBill(document);
+            // Thực hiện in tài liệu
+            PrintBill(document);
+        }
+
+        private void PreviewBill(FlowDocument document)
+        {
+            Window previewWindow = new Window
+            {
+                Title = "Bill Preview",
+                Width = 300,
+                Height = 1000,
+                Content = new FlowDocumentScrollViewer
+                {
+                    Document = document,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+                }
+            };
+            previewWindow.ShowDialog();
+        }
+
+        private void PrintDetailBill(object sender, RoutedEventArgs e)
+        {
+            if (_selectedBillDetail == null)
+            {
+                MessageBox.Show("Please select at least one item to print bill.");
+                return;
+            }
+
+            FlowDocument billDocument = CreateBillDetailDocument();
+
+            // Hiển thị bản xem trước hóa đơn trước khi in
+            //PreviewBill(billDocument);
+
+            // Thực hiện in tài liệu chi tiết bill
+            PrintBill(billDocument);
+        }
+
+        private FlowDocument CreateBillDetailDocument()
+        {
+            if (_selectedBillDetail == null) return null;
+
+            string customerName = _selectedBillDetail.customer_name;
+            string phoneNumber = _selectedBillDetail.customer_phone;
+            double totalPrice = _selectedBillDetail.total_price;
+            int billID = _selectedBillDetail.bill_id ?? 0;
+            FlowDocument document = new FlowDocument
+            {
+                PageWidth = 275,
+                PagePadding = new Thickness(10),
+                ColumnWidth = double.PositiveInfinity
+            };
+
+            var drawing = RenderSvg("Images/Svgs/logo.svg");
+            if (drawing != null)
+            {
+                var drawingImage = new DrawingImage(drawing);
+                Image svgImage = new Image
+                {
+                    Source = drawingImage,
+                    Width = 100,
+                    Height = 50,
+                    Stretch = Stretch.Uniform
+                };
+                document.Blocks.Add(new BlockUIContainer(svgImage));
+            }
+
+            document.Blocks.Add(new Paragraph(new Run(currentBranch.name))
+                { FontSize = 10, TextAlignment = TextAlignment.Center });
+            document.Blocks.Add(new Paragraph(new Run(currentBranch.description))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            });
+            document.Blocks.Add(new Paragraph(new Run(currentBranch.website))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            });
+
+            document.Blocks.Add(new Paragraph(new Run("Bill"))
+            {
+                FontSize = 16,
+                FontWeight = FontWeights.Bold,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            });
+
+            document.Blocks.Add(new Paragraph(new Run($"Customer: {customerName}\nPhone number: {phoneNumber}"))
+            {
+                FontSize = 12,
+                TextAlignment = TextAlignment.Left,
+                FontFamily = new FontFamily("Roboto"),
+            });
+
+
+            document.Blocks.Add(
+                new Paragraph(new Run($"Bill ID: #{billID}\nDate: {_selectedBillDetail.created_at:dd/MM/yyyy HH:mm}"))
+                {
+                    FontSize = 12,
+                    TextAlignment = TextAlignment.Left,
+                    FontFamily = new FontFamily("Roboto"),
+                });
+
+            document.Blocks.Add(CreateDetailHeaderRow(new[] { "Employee", "Price", "Fee", "Total" }));
+
+            foreach (var item in _selectedBillDetail.service)
+            {
+                document.Blocks.Add(CreateDetailLineRow(new[]
+                {
+                    ShowNameEmployee(item.user_id),
+                    item.price.ToString("N2"),
+                    item.service_fee.ToString("N2"),
+                    (item.price + item.service_fee).ToString("N2"),
+                }));
+            }
+
+            document.Blocks.Add(new Paragraph(new Run($"\nTotal: {totalPrice} $"))
+            {
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                TextAlignment = TextAlignment.Right
+            });
+            document.Blocks.Add(new Paragraph(new Run(currentBranch.address))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            });
+            document.Blocks.Add(new Paragraph(new Run(currentBranch.sdt))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            });
+            document.Blocks.Add(new Paragraph(new Run(currentBranch.open_close))
+            {
+                FontSize = 10,
+                TextAlignment = TextAlignment.Center,
+                FontFamily = new FontFamily("Roboto"),
+            });
+            return document;
+        }
+
+
+        private BlockUIContainer CreateDetailHeaderRow(string[] columns)
+        {
+            Border rowBorder = new Border
+            {
+                BorderBrush = Brushes.Black,
+                BorderThickness = new Thickness(1, 1, 1, 1),
+                Padding = new Thickness(0),
+                Margin = new Thickness(0)
+            };
+
+            Grid grid = new Grid();
+
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+
+            for (int i = 0; i < columns.Length; i++)
+            {
+                TextBlock textBlock = new TextBlock
+                {
+                    Text = columns[i],
+                    FontWeight = FontWeights.Bold,
+                    TextAlignment = TextAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(1),
+                    TextWrapping = TextWrapping.Wrap,
+                    FontSize = 12,
+                    FontFamily = new FontFamily("Roboto")
+                };
+
+                Border cellBorder = new Border
+                {
+                    BorderBrush = Brushes.Black,
+                    Width = (double)grid.ColumnDefinitions[i].Width.Value,
+                    BorderThickness = new Thickness(
+                        left: (i == 1 || i == 2 || i == 3 || i == 4) ? 1 : 0,
+                        top: 0,
+                        right: 0,
+                        bottom: 0),
+                    Child = textBlock
+                };
+
+                Grid.SetColumn(cellBorder, i);
+                grid.Children.Add(cellBorder);
+            }
+
+            rowBorder.Child = grid;
+            return new BlockUIContainer(rowBorder);
+        }
+
+        private BlockUIContainer CreateDetailLineRow(string[] columns)
+        {
+            Border rowBorder = new Border
+            {
+                BorderBrush = Brushes.Black,
+                BorderThickness = new Thickness(1, 0, 1, 1),
+                Padding = new Thickness(0),
+                Margin = new Thickness(0)
+            };
+
+            Grid grid = new Grid();
+
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+
+            for (int i = 0; i < columns.Length; i++)
+            {
+                TextBlock textBlock = new TextBlock
+                {
+                    Text = columns[i],
+                    FontWeight = FontWeights.Normal,
+                    TextAlignment = TextAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(1),
+                    TextWrapping = TextWrapping.Wrap,
+                    FontSize = 12,
+                    FontFamily = new FontFamily("Roboto")
+                };
+
+                Border cellBorder = new Border
+                {
+                    BorderBrush = Brushes.Black,
+                    BorderThickness = new Thickness(
+                        left: (i == 1 || i == 2 || i == 3 || i == 4) ? 1 : 0,
+                        top: 0,
+                        right: 0,
+                        bottom: 0),
+                    Child = textBlock
+                };
+
+                Grid.SetColumn(cellBorder, i);
+                grid.Children.Add(cellBorder);
+            }
+
+            rowBorder.Child = grid;
+            return new BlockUIContainer(rowBorder);
         }
 
         private void TotalPriceChanged()
@@ -443,12 +784,12 @@ namespace NailManager.Screen
                 toDate ??= DateTime.Today;
 
                 // Lấy offset của múi giờ cục bộ so với UTC
-                TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
+                // TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
                 // Console.WriteLine("gmt: " + offset.TotalHours + ':' + offset.Minutes);
 
                 // Điều chỉnh fromDate và toDate dựa trên offset của múi giờ cục bộ
-                DateTime adjustedFromDate = fromDate.Value.Add(-offset);
-                DateTime adjustedToDate = toDate.Value.Add(-offset).AddHours(23).AddMinutes(59).AddSeconds(59);
+                DateTime adjustedFromDate = fromDate.Value;
+                DateTime adjustedToDate = toDate.Value;
 
                 // Chuyển đổi fromDate và toDate thành chuỗi theo định dạng yêu cầu
                 string startDay = adjustedFromDate.ToString("yyyy-MM-dd HH:mm:ss");
@@ -492,22 +833,32 @@ namespace NailManager.Screen
                     try
                     {
                         var responseData = JsonConvert.DeserializeObject<ListBillModel>(responseBody);
-                        var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
-                        Console.WriteLine("responseconvert in get Bill in bill list");
-                        Console.WriteLine(responseconvert);
-
+                        Console.WriteLine(Utls.FormatJsonString(responseBody));
+                        var employee = StaffComboBox.SelectedItem as UserFromListApi;
+                        var employeeName = employee?.name;
                         if (responseData != null && responseData.status == 200)
                         {
                             Bill.Clear();
                             TotalMoney.Text = (responseData.data.total_price != 0 ? responseData.data.total_price : 0) +
                                               " $";
                             EmployeeProfit.Text =
-                                (responseData.data.total_profit != 0 ? responseData.data.total_profit : 0) + " $";
+                                (responseData.data.total_profit != 0
+                                    ? (employeeName == null
+                                        ? Math.Round(responseData.data.total_profit - responseData.data.total_service_fee, 2)
+                                        : Math.Round(responseData.data.total_profit, 2)
+                                    )
+                                    : 0).ToString("F2") + " $";
 
                             TotalBill.Text = (responseData.data.total_bill != 0 ? responseData.data.total_bill : 0)
                                 .ToString();
-                            
-                            TotalServiceFee.Text = (responseData.data.total_service_fee != 0 ? responseData.data.total_service_fee : 0) + " $";
+
+                            TotalServiceFee.Text = (responseData.data.total_service_fee != 0
+                                ? responseData.data.total_service_fee
+                                : 0) + " $";
+                            TotalMoneyWithoutService.Text = ((responseData.data.total_price != 0 &&
+                                                              responseData.data.total_profit != 0)
+                                ? responseData.data.total_price - responseData.data.total_service_fee
+                                : 0) + " $";
                             foreach (var bill in responseData.data.list)
                             {
                                 // Console.WriteLine("bill.customer_phone: " + bill.customer_phone);
@@ -519,10 +870,9 @@ namespace NailManager.Screen
                                     customer_name = bill.customer_name,
                                     customer_phone = bill.customer_phone,
                                     branch_id = bill.branch_id,
-                                    // pay_method = bill.pay_method,
-                                    // user_id = bill.user_id,
+                                    service_fee = bill.service_fee,
                                     total_price = bill.total_price,
-                                    // discount = bill.discount,
+                                    price = bill.price,
                                     status = status_convert,
                                 });
                             }
@@ -633,46 +983,66 @@ namespace NailManager.Screen
 
         private async void CancelBill(object sender, RoutedEventArgs e)
         {
-            if (SelectedBill == null)
+            if (_selectedBillDetail == null)
             {
                 MessageBox.Show("Please select a bill to cancel.", "Warning", MessageBoxButton.OK,
                     MessageBoxImage.Warning);
                 return;
             }
 
+            // Hiển thị thông báo xác nhận
+            MessageBoxResult result = MessageBox.Show(
+                "Are you sure you want to cancel this bill?",
+                "Confirmation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes)
+            {
+                // Nếu người dùng chọn "No", thoát hàm
+                return;
+            }
+
+            // Console.WriteLine("SelectedBill.bill_id: " + _selectedBillDetail.bill_id);
+            // Console.WriteLine("SelectedBill.bill_id: " + SelectedBill.bill_id);
+            string apiUrl = "/bill/delete?bill_id=" + _selectedBillDetail.bill_id;
             ShowLoading(true); // Hiển thị loading trong quá trình gọi API
-            string apiUrl = "/bill/delete?bill_id=" + SelectedBill.bill_id;
-            // var parameters = new Dictionary<string, string>
-            // {
-            //     { "bill_id", SelectedBill.bill_id.ToString() }
-            // };
-            // Console.WriteLine("Parameters for API request cancel:");
-            // foreach (var param in parameters)
-            // {
-            //     Console.WriteLine($"{param.Key}: {param.Value}");
-            // }
+            
+
             try
             {
                 var apiService = new Api();
                 await apiService.PostApiAsyncWithoutParam(apiUrl, (responseBody) =>
                 {
-                    var responseData =
-                        JsonConvert.DeserializeObject<APIResponFromCancelBill>(
-                            responseBody); // Đảm bảo `ApiResponse` là lớp phù hợp để phân tích kết quả.
+                    var responseData = JsonConvert.DeserializeObject<APIResponFromCancelBill>(responseBody);
                     var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
                     Console.WriteLine("responseconvert when cancel");
                     Console.WriteLine(responseconvert);
+            
                     if (responseData != null && responseData.status == 200)
                     {
                         Dispatcher.Invoke(() =>
                         {
                             // Xóa hóa đơn khỏi danh sách và làm mới giao diện
                             // Bill.Remove(SelectedBill);
-                            FilteredBill.Refresh();
+                            // FilteredBill.Refresh();
                             SelectedBill = null;
-                            GetBills();
                             MessageBox.Show("Bill has been successfully canceled.", "Success", MessageBoxButton.OK,
                                 MessageBoxImage.Information);
+                            // GetBills();
+                            int.TryParse(BillIdSearch.Text, out int billId);
+
+                            // Lấy ID của nhân viên từ ComboBox nếu có lựa chọn
+                            var selectedEmployee = StaffComboBox.SelectedItem as UserFromListApi;
+                            int? employeeId = selectedEmployee?.user_id;
+
+                            // Lấy giá trị từ DatePicker
+                            DateTime? fromDate = DatePickerInputFrom.SelectedDate;
+                            DateTime? toDate = DatePickerInputTo.SelectedDate;
+
+                            // Gọi GetBills với các tham số vừa lấy
+                            GetBills(fromDate: fromDate, toDate: toDate, billId: billId > 0 ? billId : null,
+                                employeeId: employeeId);
                         });
                     }
                     else
@@ -693,134 +1063,6 @@ namespace NailManager.Screen
             }
         }
 
-        private FlowDocument CreateBillDocument(string billId)
-        {
-            string customerName = CustomerNameTextBox.Text;
-            string phoneNumber = PhoneNumberTextBox.Text;
-            string totalPriceText = TotalPrice.Text.Replace("$", "").Trim();
-            double totalPrice = string.IsNullOrWhiteSpace(totalPriceText) ? 0 : double.Parse(totalPriceText);
-
-            FlowDocument document = new FlowDocument
-            {
-                PageWidth = 275,
-                PagePadding = new Thickness(10),
-                ColumnWidth = double.PositiveInfinity
-            };
-
-            // Add Image (SVG)
-            var drawing = RenderSvg("Images/Svgs/logo.svg");
-            if (drawing != null)
-            {
-                var drawingImage = new DrawingImage(drawing);
-                Image svgImage = new Image
-                {
-                    Source = drawingImage,
-                    Width = 100,
-                    Height = 50,
-                    Stretch = Stretch.Uniform
-                };
-
-                BlockUIContainer imageContainer = new BlockUIContainer(svgImage);
-                document.Blocks.Add(imageContainer);
-            }
-
-            Paragraph name =
-                new Paragraph(new Run(
-                    currentBranch.name))
-                {
-                    FontSize = 10,
-                    TextAlignment = TextAlignment.Center,
-                    FontFamily = new FontFamily("Roboto"),
-                };
-            document.Blocks.Add(name);
-            Paragraph desc =
-                new Paragraph(new Run(
-                    currentBranch.description))
-                {
-                    FontSize = 10,
-                    TextAlignment = TextAlignment.Center,
-                    FontFamily = new FontFamily("Roboto"),
-                };
-            document.Blocks.Add(desc);
-            Paragraph website =
-                new Paragraph(new Run(
-                    currentBranch.website))
-                {
-                    FontSize = 10,
-                    TextAlignment = TextAlignment.Center,
-                    FontFamily = new FontFamily("Roboto"),
-                };
-            document.Blocks.Add(website);
-            // Title
-            Paragraph title = new Paragraph(new Run("Bill Invoice (COMPLETE)"))
-            {
-                FontSize = 16,
-                FontWeight = FontWeights.Bold,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Roboto"),
-            };
-            document.Blocks.Add(title);
-
-
-            // Table Header
-            document.Blocks.Add(CreateHeaderRow(new[] { "NO", "Name", "Price" }));
-
-            // Table Rows
-            int index = 1;
-            foreach (var item in SelectedItems)
-            {
-                double price = (double)item.price;
-                string formattedPrice = price % 1 == 0 ? price.ToString("N0") : price.ToString("N2");
-
-                document.Blocks.Add(CreateLineRow(new[]
-                {
-                    index.ToString(),
-                    item.product_name,
-                    formattedPrice,
-                }));
-                index++;
-            }
-
-            // Total
-            Paragraph totalParagraph = new Paragraph(new Run($"\nTotal: {totalPrice:N0} $"))
-            {
-                FontSize = 14,
-                FontWeight = FontWeights.Bold,
-                TextAlignment = TextAlignment.Right,
-                FontFamily = new FontFamily("Roboto"),
-            };
-            document.Blocks.Add(totalParagraph);
-
-            Paragraph address =
-                new Paragraph(new Run(
-                    currentBranch.address))
-                {
-                    FontSize = 10,
-                    TextAlignment = TextAlignment.Center,
-                    FontFamily = new FontFamily("Roboto"),
-                };
-            document.Blocks.Add(address);
-            Paragraph phone =
-                new Paragraph(new Run(
-                    currentBranch.sdt))
-                {
-                    FontSize = 10,
-                    TextAlignment = TextAlignment.Center,
-                    FontFamily = new FontFamily("Roboto"),
-                };
-            document.Blocks.Add(phone);
-
-            Paragraph time =
-                new Paragraph(new Run(
-                    currentBranch.open_close))
-                {
-                    FontSize = 10,
-                    TextAlignment = TextAlignment.Center,
-                    FontFamily = new FontFamily("Roboto"),
-                };
-            document.Blocks.Add(time);
-            return document;
-        }
 
         private BlockUIContainer CreateHeaderRow(string[] columns)
         {
@@ -833,10 +1075,10 @@ namespace NailManager.Screen
             };
 
             Grid grid = new Grid();
-
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(43) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(68) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(68) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(73) });
 
             for (int i = 0; i < columns.Length; i++)
             {
@@ -884,9 +1126,10 @@ namespace NailManager.Screen
 
             Grid grid = new Grid();
 
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(43) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(68) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(68) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(73) });
 
             for (int i = 0; i < columns.Length; i++)
             {
@@ -933,13 +1176,9 @@ namespace NailManager.Screen
 
         private void ClearOrderDetails()
         {
-            // UserIdTextBox.Text = string.Empty;
-            // StaffTextBox.Text = string.Empty;
             CustomerNameTextBox.Text = string.Empty;
             PhoneNumberTextBox.Text = string.Empty;
-            // BillIdTextBox.Text = string.Empty;
             TotalPrice.Text = string.Empty;
-
             SelectedItems.Clear();
         }
 
@@ -947,6 +1186,7 @@ namespace NailManager.Screen
         {
             // Xóa các giá trị trong các TextBox
             ClearOrderDetails();
+            _selectedBillDetail = null;
             // UpdateProductSelectionState();
         }
 

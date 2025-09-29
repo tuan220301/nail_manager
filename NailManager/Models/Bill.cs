@@ -1,12 +1,16 @@
+using System.ComponentModel;
+
 namespace NailManager.Models
 {
    
     public class BilLResponBranch
     {
+        public int? bill_id { get; set; }
         public string customer_name { get; set; }
         public string customer_phone { get; set; }
         public int status { get; set; }
         public double total_price { get; set; }
+        public DateTime created_at { get; set; }
         public List<ProductInBillModel> service { get; set; } // Đổi tên thuộc tính thành 'list' để phù hợp với API response
     }
 
@@ -82,12 +86,31 @@ namespace NailManager.Models
     }
     public class ListBillRespone
     {
+        private bool _isSelected;
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                _isSelected = value;
+                OnPropertyChanged(nameof(IsSelected));
+            }
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
         public int bill_id { get; set; }
         public int branch_id { get; set; }
         public string customer_name { get; set; }
         public string customer_phone { get; set; }
         public string status { get; set; }
         public double total_price { get; set; }
+        public double price { get; set; }
+        public double service_fee { get; set; }
         public DateTime created_at { get; set; }
     }
 }

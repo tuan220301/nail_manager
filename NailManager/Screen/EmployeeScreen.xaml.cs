@@ -190,15 +190,15 @@ namespace NailManager.Screen
 // Hàm chung để lấy dữ liệu và gọi API bills
         private async Task GetUserDataAndBills(bool isBranch, int? userId = null, string password = null)
         {
+            FilteredBills.Clear();
             // Thiết lập thời gian từ và đến mặc định
-            TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
             DateTime fromDate = DateTime.Today;
             DateTime toDate = DateTime.Today;
-            DateTime adjustedFromDate = fromDate.Add(-offset);
-            DateTime adjustedToDate = toDate.Add(-offset).AddHours(23).AddMinutes(59).AddSeconds(59);
+            // DateTime adjustedFromDate = fromDate.Add(-offset);
+            // DateTime adjustedToDate = toDate.Add(-offset).AddHours(23).AddMinutes(59).AddSeconds(59);
 
-            string startDay = adjustedFromDate.ToString("yyyy-MM-dd HH:mm:ss");
-            string endDay = adjustedToDate.ToString("yyyy-MM-dd HH:mm:ss");
+            string startDay = fromDate.ToString("yyyy-MM-dd HH:mm:ss");
+            string endDay = toDate.ToString("yyyy-MM-dd HH:mm:ss");
 
             // Kiểm tra branch_id
             int branchId;
@@ -251,6 +251,7 @@ namespace NailManager.Screen
             }
 
             var apiService = new Api();
+            
             await apiService.PostApiAsync(apiUrl, parameters, (responseBody) =>
             {
                 try
@@ -262,9 +263,9 @@ namespace NailManager.Screen
                     if (responseData != null && responseData.status == 200)
                     {
                         // Xóa dữ liệu cũ và cập nhật dữ liệu mới
-                        FilteredBills.Clear();
-                        TotalPriceText.Text = $"Total Price: {responseData.data.total_price} $";
-                        TotalProfitText.Text = $"Total Profit: {responseData.data.total_profit} $";
+                        
+                        TotalPriceText.Text = $"Total Price: {responseData.data.total_price}";
+                        TotalProfitText.Text = $"Total Profit: {responseData.data.total_profit}";
                         TotalBillText.Text = $"Total Bill: {responseData.data.total_bill}";
 
                         foreach (var bill in responseData.data.list)
@@ -519,6 +520,12 @@ namespace NailManager.Screen
 
         private FlowDocument CreateBillDocument()
         {
+            if (FilteredBills.Count() == 0)
+            {
+                MessageBox.Show(
+                    $"Please waiting for the bill to be generated. Please try again after some time.");
+                return null;
+            }
             string employeeId = UserIDTextBox.Text;
             string employee = UserNameTextBox.Text;
             string rate = RateTextBox.Text;

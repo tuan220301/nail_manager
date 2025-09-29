@@ -3,10 +3,10 @@ namespace NailManager.Models;
 public class ApiConnect
 {
     //product
-    // public string Url { get; set; } = "https://api-nail.phungmup.online/api/v1";
+    public string Url { get; set; } = "https://hainam.logit.id.vn/api-nail/v1";
     
     //test
-    public string Url { get; set; } = "https://beta-nail.phungmup.online/api/v1";
+    // public string Url { get; set; } = "https://beta-nail.phungmup.online/api/v1";
 }
 public class ResponseData
 {

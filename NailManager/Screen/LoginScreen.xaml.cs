@@ -122,7 +122,9 @@ namespace NailManager.Screen
                             string responseBody = await response.Content.ReadAsStringAsync();
                             LoginRespon? responseData = JsonConvert.DeserializeObject<LoginRespon>(responseBody);
                             DataRespon data = responseData?.data;
-
+                            var responseconvert = JsonConvert.DeserializeObject<dynamic>(responseBody);
+                            Console.WriteLine("responseconvert in login");
+                            Console.WriteLine(responseconvert);
                             if (data != null)
                             {
                                 string dataAsString = JsonConvert.SerializeObject(data, Formatting.Indented);

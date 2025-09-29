@@ -617,7 +617,7 @@
 
 
                         <ScrollViewer
-                            Height="750"
+                            Height="700"
                             Style="{DynamicResource ResourceKey=styleScrollViewer}"
                             VerticalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding FilteredProducts}">
@@ -779,12 +779,6 @@
                     Style="{StaticResource NormalInput}"
                     Text=""
                     x:Name="PhoneNumberTextBox" />
-                <!-- <TextBlock>Employee</TextBlock> -->
-                <!--  <ComboBox  -->
-                <!--  FontSize="16"  -->
-                <!--  Margin="0,0,0,10"  -->
-                <!--  Style="{StaticResource RoundComboBox}"  -->
-                <!--  x:Name="StaffComboBox" />  -->
 
                 <TextBlock
                     FontSize="18"

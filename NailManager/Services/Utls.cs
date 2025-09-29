@@ -17,4 +17,9 @@ public class Utls
         }
     }
 
+    public static string FortmatFromApiResponse(string responseBody)
+    {
+        return JsonConvert.DeserializeObject<dynamic>(responseBody);
+    }
+
 }

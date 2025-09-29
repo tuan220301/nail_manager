@@ -343,7 +343,6 @@ public partial class TabBillCreate : UserControl
         string customerName = CustomerNameTextBox?.Text ?? string.Empty;
         string phoneNumber = PhoneNumberTextBox?.Text ?? string.Empty;
         var selectedUser = StaffComboBox?.SelectedItem as UserFromListApi;
-        string staff = selectedUser?.user_name ?? "Unknown";
         var selectedItems = SelectedItems ?? new ObservableCollection<ListService>(); // Sử dụng trực tiếp SelectedItems
         string totalPriceText = TotalPrice?.Text.Replace("$", "").Trim() ?? "0";
         double totalPrice = string.IsNullOrWhiteSpace(totalPriceText) ? 0 : double.Parse(totalPriceText);
@@ -412,7 +411,7 @@ public partial class TabBillCreate : UserControl
         string billIdString = billID ?? "Unknown"; // Ensure bill_id_string is not null
         document.Blocks.Add(
             new Paragraph(new Run(
-                $"Bill ID: #{billIdString}\nStaff: {staff}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
+                $"Bill ID: #{billIdString}\nFrom: {DateTime.Now:dd/MM/yyyy} {DateTime.Now:HH:mm}"))
             {
                 FontSize = 12,
                 TextAlignment = TextAlignment.Left,
@@ -587,15 +586,20 @@ public partial class TabBillCreate : UserControl
     private async void CreateBill_Click(object sender, RoutedEventArgs e)
     {
         // Kiểm tra đầu vào xem có đầy đủ thông tin chưa
-        if (string.IsNullOrWhiteSpace(CustomerNameTextBox.Text) ||
-            string.IsNullOrWhiteSpace(PhoneNumberTextBox.Text) ||
-            StaffComboBox.SelectedItem == null ||
-            !SelectedItems.Any())
+        if (string.IsNullOrWhiteSpace(CustomerNameTextBox.Text))
         {
-            MessageBox.Show("Please fill full information.", "Error",
+            MessageBox.Show("Please enter the customer name.", "Missing Information",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
-            return; // Dừng quá trình nếu thông tin không đầy đủ
+            return; // Dừng lại nếu không có tên khách hàng
         }
+
+        if (string.IsNullOrWhiteSpace(PhoneNumberTextBox.Text))
+        {
+            MessageBox.Show("Please enter the customer phone number.", "Missing Information",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return; // Dừng lại nếu không có số điện thoại khách hàng
+        }
+
 
         ShowLoading(true); // Hiển thị loading
         try
@@ -704,7 +708,11 @@ public partial class TabBillCreate : UserControl
         // Lấy giá trị từ TextBox (giá tiền cho dịch vụ)
         string inputPriceText = OrderServiceTextBox.Text;
         var selectedUser = StaffComboBox.SelectedItem as UserFromListApi;
+
+        // Lấy giá trị service fee, mặc định là 0 nếu không nhập
         string inputServiceFeeText = ServiceFee.Text;
+        double serviceFee = string.IsNullOrWhiteSpace(inputServiceFeeText) ? 0 : double.Parse(inputServiceFeeText);
+
         // Kiểm tra xem người dùng có nhập giá hợp lệ không
         if (double.TryParse(inputPriceText, out double servicePrice))
         {
@@ -714,25 +722,19 @@ public partial class TabBillCreate : UserControl
             if (existingService != null)
             {
                 // Nếu sản phẩm đã tồn tại, cập nhật giá mới nhất
-                existingService.other_price = double.Parse(inputPriceText);
-                existingService.service_fee = double.Parse(inputServiceFeeText);
+                existingService.other_price = servicePrice;
+                existingService.service_fee = serviceFee;
             }
             else
             {
                 // Nếu chưa tồn tại, tạo sản phẩm mới với tên "Other service"
-                // var newProduct = new Product
-                // {
-                //     product_name = selectedUser.user_name, // Tên sản phẩm
-                //     price = servicePrice, // Giá tiền nhập vào
-                //     fee = double.Parse(inputServiceFeeText)
-                // };
                 var newService = new ListService
                 {
                     product = [],
                     user_id = selectedUser.user_id,
                     user_name = selectedUser.name,
                     other_price = servicePrice,
-                    service_fee = double.Parse(inputServiceFeeText)
+                    service_fee = serviceFee
                 };
 
                 // Thêm sản phẩm mới vào danh sách SelectedItems
@@ -744,9 +746,6 @@ public partial class TabBillCreate : UserControl
 
             // Làm mới danh sách SelectedItems trên giao diện người dùng
             RefreshSelectedItems();
-
-            // Cập nhật trạng thái chọn sản phẩm
-            // UpdateProductSelectionState();
         }
         else
         {
